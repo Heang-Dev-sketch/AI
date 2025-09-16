@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Extractor | Image Tables to CSV/Excel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .file-drop-zone { transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out; }
+        .file-drop-zone.dragover { background-color: #e0e7ff; border-color: #4f46e5; }
+        .loader {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #table-preview th, #table-preview td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 antialiased">
+
+    <header class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i data-lucide="table-2" class="text-indigo-600 w-7 h-7"></i>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Table Extractor</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Convert Image Tables to Data</h1>
+                <p class="mt-4 text-lg text-gray-600">
+                    Extract data from tables in images and export as editable CSV or Excel files.
+                </p>
+            </div>
+
+            <div id="app" class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg border border-gray-200 min-h-[350px]">
+                <div id="upload-view">
+                    <input type="file" id="file-input" class="hidden" accept="image/*">
+                    <label for="file-input" id="file-drop-zone" class="file-drop-zone flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 mb-4 text-gray-500"></i>
+                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Upload an image of a table</span></p>
+                            <p class="text-xs text-gray-500">JPG, PNG</p>
+                        </div>
+                    </label>
+                </div>
+                
+                <div id="loading-view" class="hidden text-center py-16">
+                    <div class="loader mx-auto"></div>
+                    <p id="loading-text" class="mt-4 text-lg font-medium text-gray-600">Recognizing table structure...</p>
+                    <progress id="loading-progress" class="w-full h-2 bg-gray-200 rounded-full mt-2" value="0" max="1"></progress>
+                </div>
+
+                <div id="result-view" class="hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Extracted Table Data</h3>
+                         <button id="scan-another-btn" class="flex items-center gap-2 px-3 py-1.5 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition text-sm">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i><span>Scan Another</span>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto border rounded-lg">
+                        <table id="table-preview" class="w-full text-sm"></table>
+                    </div>
+                    <div class="mt-4 flex justify-end gap-2">
+                         <button id="csv-btn" class="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition text-sm">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i><span>Download CSV</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    lucide.createIcons();
+
+    const uploadView = document.getElementById('upload-view');
+    const loadingView = document.getElementById('loading-view');
+    const resultView = document.getElementById('result-view');
+    const fileInput = document.getElementById('file-input');
+    const fileDropZone = document.getElementById('file-drop-zone');
+    const loadingText = document.getElementById('loading-text');
+    const loadingProgress = document.getElementById('loading-progress');
+    const tablePreview = document.getElementById('table-preview');
+    const csvBtn = document.getElementById('csv-btn');
+    const scanAnotherBtn = document.getElementById('scan-another-btn');
+    
+    let tableData = [];
+
+    const handleFile = async (file) => {
+        if (!file) return;
+        uploadView.classList.add('hidden');
+        loadingView.classList.remove('hidden');
+        loadingProgress.value = 0;
+
+        const worker = await Tesseract.createWorker('eng', 1, {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    loadingText.textContent = 'Extracting data...';
+                    loadingProgress.value = m.progress;
+                }
+            }
+        });
+
+        const { data: { text } } = await worker.recognize(file);
+        await worker.terminate();
+
+        tableData = parseTextToTable(text);
+        renderTable(tableData);
+
+        loadingView.classList.add('hidden');
+        resultView.classList.remove('hidden');
+    };
+    
+    function parseTextToTable(text) {
+        // Simple heuristic: split by new lines for rows, and by multiple spaces or tabs for columns.
+        const rows = text.split('\n').filter(row => row.trim() !== '');
+        return rows.map(row => row.split(/\s{2,}|\t/).map(cell => cell.trim()));
+    }
+
+    function renderTable(data) {
+        tablePreview.innerHTML = '';
+        if (data.length === 0) return;
+
+        const thead = document.createElement('thead');
+        thead.className = 'bg-gray-50';
+        const headerRow = document.createElement('tr');
+        data[0].forEach((headerText, index) => {
+            const th = document.createElement('th');
+            th.textContent = headerText || `Column ${index + 1}`;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        tablePreview.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        const rowsData = data.slice(1);
+        rowsData.forEach(rowData => {
+            const tr = document.createElement('tr');
+            rowData.forEach(cellData => {
+                const td = document.createElement('td');
+                td.textContent = cellData;
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        tablePreview.appendChild(tbody);
+    }
+    
+    function downloadCSV() {
+        if (tableData.length === 0) return;
+        const csvContent = "data:text/csv;charset=utf-8," + tableData.map(e => e.map(cell => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "extracted_table.csv");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    fileDropZone.addEventListener('dragover', (e) => { e.preventDefault(); fileDropZone.classList.add('dragover'); });
+    fileDropZone.addEventListener('dragleave', (e) => { e.preventDefault(); fileDropZone.classList.remove('dragover'); });
+    fileDropZone.addEventListener('drop', (e) => { e.preventDefault(); fileDropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+    csvBtn.addEventListener('click', downloadCSV);
+    scanAnotherBtn.addEventListener('click', () => {
+        resultView.classList.add('hidden');
+        uploadView.classList.remove('hidden');
+        fileInput.value = '';
+        tableData = [];
+    });
+    </script>
+</body>
+</html>

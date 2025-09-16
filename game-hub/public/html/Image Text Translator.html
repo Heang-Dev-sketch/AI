@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Text Translator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .file-drop-zone { transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out; }
+        .file-drop-zone.dragover { background-color: #e0e7ff; border-color: #4f46e5; }
+        .loader { border: 4px solid #f3f4f6; border-top: 4px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 antialiased">
+    <header class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center gap-2">
+            <i data-lucide="languages" class="text-indigo-600 w-7 h-7"></i>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Image Text Translator</h1>
+        </div>
+    </header>
+    <main class="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Translate Text From Any Image</h1>
+                <p class="mt-4 text-lg text-gray-600">
+                    Point your camera at signs, menus, and more to get an instant translation.
+                </p>
+            </div>
+            <div id="app" class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg border border-gray-200 min-h-[350px]">
+                <div id="upload-view">
+                     <input type="file" id="file-input" class="hidden" accept="image/*">
+                    <label for="file-input" id="file-drop-zone" class="file-drop-zone flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 mb-4 text-gray-500"></i>
+                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Upload an image to translate</span></p>
+                        </div>
+                    </label>
+                </div>
+                <div id="loading-view" class="hidden text-center py-16">
+                    <div class="loader mx-auto"></div>
+                    <p id="loading-text" class="mt-4 text-lg font-medium text-gray-600">Extracting text...</p>
+                </div>
+                <div id="result-view" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Original Text</label>
+                            <textarea id="original-text" rows="8" class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm" readonly></textarea>
+                        </div>
+                        <div>
+                            <label for="lang-select" class="block text-sm font-medium text-gray-700">Translate to</label>
+                            <select id="lang-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                <option>Spanish</option><option>French</option><option>German</option><option>Japanese</option>
+                            </select>
+                            <textarea id="translated-text" rows="7" class="mt-2 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm" readonly></textarea>
+                        </div>
+                    </div>
+                     <div class="mt-6 flex justify-between items-center">
+                        <button id="scan-another-btn" class="text-indigo-600 hover:underline text-sm">Scan Another</button>
+                        <button id="translate-btn" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition text-sm">
+                            <i data-lucide="arrow-right-left" class="w-4 h-4"></i><span>Translate</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+             <div class="text-center mt-4 text-xs text-gray-500">Note: Translation is simulated. A real application requires a server-side translation API.</div>
+        </div>
+    </main>
+    <script>
+        lucide.createIcons();
+        const uploadView = document.getElementById('upload-view');
+        const loadingView = document.getElementById('loading-view');
+        const resultView = document.getElementById('result-view');
+        const fileInput = document.getElementById('file-input');
+        const fileDropZone = document.getElementById('file-drop-zone');
+        const originalText = document.getElementById('original-text');
+        const translatedText = document.getElementById('translated-text');
+        const translateBtn = document.getElementById('translate-btn');
+        const langSelect = document.getElementById('lang-select');
+        const scanAnotherBtn = document.getElementById('scan-another-btn');
+
+        const handleFile = async (file) => {
+            if (!file) return;
+            uploadView.classList.add('hidden');
+            loadingView.classList.remove('hidden');
+
+            const worker = await Tesseract.createWorker('eng');
+            const { data: { text } } = await worker.recognize(file);
+            await worker.terminate();
+
+            originalText.value = text;
+            loadingView.classList.add('hidden');
+            resultView.classList.remove('hidden');
+        };
+        
+        const simulateTranslation = () => {
+            if (!originalText.value) return;
+            const targetLang = langSelect.value;
+            translatedText.value = `[This is a simulated translation to ${targetLang} for the text: "${originalText.value.substring(0, 50)}..."]`;
+        };
+
+        translateBtn.addEventListener('click', simulateTranslation);
+        fileDropZone.addEventListener('dragover', (e) => { e.preventDefault(); fileDropZone.classList.add('dragover'); });
+        fileDropZone.addEventListener('dragleave', (e) => { e.preventDefault(); fileDropZone.classList.remove('dragover'); });
+        fileDropZone.addEventListener('drop', (e) => { e.preventDefault(); fileDropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+        scanAnotherBtn.addEventListener('click', () => {
+            resultView.classList.add('hidden');
+            uploadView.classList.remove('hidden');
+            fileInput.value = '';
+            originalText.value = '';
+            translatedText.value = '';
+        });
+    </script>
+</body>
+</html>

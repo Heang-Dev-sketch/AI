@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Scanner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .file-drop-zone { transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out; }
+        .file-drop-zone.dragover { background-color: #e0e7ff; border-color: #4f46e5; }
+        .loader { border: 4px solid #f3f4f6; border-top: 4px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 antialiased">
+    <header class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center gap-2">
+            <i data-lucide="utensils-crossed" class="text-indigo-600 w-7 h-7"></i>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Menu Scanner</h1>
+        </div>
+    </header>
+    <main class="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div class="max-w-2xl mx-auto">
+             <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Scan Restaurant Menus</h1>
+                <p class="mt-4 text-lg text-gray-600">
+                    View menus online, check ingredients, or translate dishes instantly.
+                </p>
+            </div>
+            <div id="app" class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg border border-gray-200 min-h-[350px]">
+                <div id="upload-view">
+                    <input type="file" id="file-input" class="hidden" accept="image/*">
+                    <label for="file-input" id="file-drop-zone" class="file-drop-zone flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 mb-4 text-gray-500"></i>
+                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Upload a photo of a menu</span></p>
+                        </div>
+                    </label>
+                </div>
+                <div id="loading-view" class="hidden text-center py-16">
+                    <div class="loader mx-auto"></div>
+                    <p id="loading-text" class="mt-4 text-lg font-medium text-gray-600">Reading menu...</p>
+                </div>
+                <div id="result-view" class="hidden">
+                    <div id="menu-items" class="space-y-4"></div>
+                     <div class="mt-6 flex justify-end items-center">
+                        <button id="scan-another-btn" class="text-indigo-600 hover:underline text-sm">Scan Another</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        lucide.createIcons();
+        const uploadView = document.getElementById('upload-view');
+        const loadingView = document.getElementById('loading-view');
+        const resultView = document.getElementById('result-view');
+        const fileInput = document.getElementById('file-input');
+        const fileDropZone = document.getElementById('file-drop-zone');
+        const menuItemsContainer = document.getElementById('menu-items');
+        const scanAnotherBtn = document.getElementById('scan-another-btn');
+
+        const handleFile = async (file) => {
+            if (!file) return;
+            uploadView.classList.add('hidden');
+            loadingView.classList.remove('hidden');
+
+            const worker = await Tesseract.createWorker('eng');
+            const { data: { text } } = await worker.recognize(file);
+            await worker.terminate();
+
+            renderMenu(text);
+            loadingView.classList.add('hidden');
+            resultView.classList.remove('hidden');
+        };
+        
+        const renderMenu = (text) => {
+            menuItemsContainer.innerHTML = '';
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            const priceRegex = /[\d.,]+$/;
+
+            lines.forEach(line => {
+                const priceMatch = line.match(priceRegex);
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'p-3 bg-gray-50 rounded-lg border';
+                
+                if(priceMatch) {
+                    const price = priceMatch[0];
+                    const name = line.replace(priceRegex, '').trim().replace(/\.+$/, '').trim();
+                    itemDiv.innerHTML = `<div class="flex justify-between items-center"><h4 class="font-semibold">${name}</h4><p class="font-mono text-indigo-600 font-bold">$${price}</p></div>`;
+                } else {
+                     itemDiv.innerHTML = `<p class="text-gray-600">${line}</p>`;
+                }
+                menuItemsContainer.appendChild(itemDiv);
+            });
+        };
+
+        fileDropZone.addEventListener('dragover', (e) => { e.preventDefault(); fileDropZone.classList.add('dragover'); });
+        fileDropZone.addEventListener('dragleave', (e) => { e.preventDefault(); fileDropZone.classList.remove('dragover'); });
+        fileDropZone.addEventListener('drop', (e) => { e.preventDefault(); fileDropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+        scanAnotherBtn.addEventListener('click', () => {
+            resultView.classList.add('hidden');
+            uploadView.classList.remove('hidden');
+            fileInput.value = '';
+        });
+    </script>
+</body>
+</html>

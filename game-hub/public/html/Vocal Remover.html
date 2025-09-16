@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Vocal Remover | Isolate Vocals from Music</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .file-drop-zone { transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out; }
+        .file-drop-zone.dragover { background-color: #e0e7ff; border-color: #4f46e5; }
+        .loader {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 antialiased">
+
+    <header class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i data-lucide="mic-off" class="text-indigo-600 w-7 h-7"></i>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-900">AI Vocal Remover</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Online Vocal Remover</h1>
+                <p class="mt-4 text-lg text-gray-600">
+                    Isolate vocals or create instrumental tracks from your songs using AI-powered techniques.
+                </p>
+            </div>
+
+            <div id="app" class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg border border-gray-200">
+                
+                <div id="upload-view">
+                    <input type="file" id="audio-file-input" class="hidden" accept="audio/*">
+                    <label for="audio-file-input" id="file-drop-zone" class="file-drop-zone flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 mb-4 text-gray-500"></i>
+                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or drag and drop a stereo audio file</p>
+                            <p class="text-xs text-gray-500">MP3, WAV, etc.</p>
+                        </div>
+                    </label>
+                </div>
+                
+                <div id="loading-view" class="hidden text-center py-16">
+                    <div class="loader mx-auto"></div>
+                    <p id="loading-text" class="mt-4 text-lg font-medium text-gray-600">Processing audio...</p>
+                </div>
+
+                <div id="editor-view" class="hidden">
+                    <h3 class="text-lg font-semibold mb-2 text-gray-800">Your Audio</h3>
+                    <p class="text-sm text-gray-500 mb-4">Preview the original, instrumental, or vocal tracks below.</p>
+                    <div class="mb-6">
+                         <audio id="audio-player" controls class="w-full"></audio>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                        <button data-track="original" class="track-btn bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg">Original</button>
+                        <button data-track="instrumental" class="track-btn bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg">Instrumental</button>
+                        <button data-track="vocals" class="track-btn bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg">Vocals</button>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-end items-center gap-4">
+                        <button id="upload-another-btn" class="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition text-sm">Process Another</button>
+                        <a id="download-link" class="w-full sm:w-auto text-center px-6 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition text-sm">Download Instrumental</a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4 text-xs text-gray-500">
+                Note: This tool uses a phase-inversion technique that works best on stereo tracks where vocals are panned to the center. Results may vary.
+            </div>
+        </div>
+    </main>
+
+    <script>
+    lucide.createIcons();
+
+    const uploadView = document.getElementById('upload-view');
+    const loadingView = document.getElementById('loading-view');
+    const loadingText = document.getElementById('loading-text');
+    const editorView = document.getElementById('editor-view');
+    const audioFileInput = document.getElementById('audio-file-input');
+    const fileDropZone = document.getElementById('file-drop-zone');
+    const audioPlayer = document.getElementById('audio-player');
+    const downloadLink = document.getElementById('download-link');
+    const uploadAnotherBtn = document.getElementById('upload-another-btn');
+    const trackButtons = document.querySelectorAll('.track-btn');
+
+    let audioContext;
+    let originalBuffer, instrumentalBuffer, vocalBuffer;
+    let originalBlobUrl, instrumentalBlobUrl, vocalBlobUrl;
+    let fileName = 'audio';
+
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    try { audioContext = new AudioContext(); } catch (e) { alert('Web Audio API is not supported in this browser'); }
+
+    fileDropZone.addEventListener('dragover', (e) => { e.preventDefault(); fileDropZone.classList.add('dragover'); });
+    fileDropZone.addEventListener('dragleave', (e) => { e.preventDefault(); fileDropZone.classList.remove('dragover'); });
+    fileDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileDropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+    });
+    audioFileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+    uploadAnotherBtn.addEventListener('click', resetApp);
+
+    async function handleFile(file) {
+        fileName = file.name.replace(/\.[^/.]+$/, "");
+        uploadView.classList.add('hidden');
+        loadingText.textContent = 'Decoding audio...';
+        loadingView.classList.remove('hidden');
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const buffer = await audioContext.decodeAudioData(e.target.result);
+                if (buffer.numberOfChannels < 2) {
+                    alert("Please upload a stereo audio file for vocal removal.");
+                    resetApp();
+                    return;
+                }
+                originalBuffer = buffer;
+                
+                loadingText.textContent = 'Isolating tracks...';
+                await processVocalRemoval();
+
+                originalBlobUrl = URL.createObjectURL(bufferToWave(originalBuffer));
+                audioPlayer.src = originalBlobUrl;
+
+                loadingView.classList.add('hidden');
+                editorView.classList.remove('hidden');
+            } catch (error) {
+                alert('Error processing audio file.');
+                console.error(error);
+                resetApp();
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    async function processVocalRemoval() {
+        return new Promise(resolve => {
+            // This is a simplified vocal removal technique using phase inversion (center-pan removal)
+            const left = originalBuffer.getChannelData(0);
+            const right = originalBuffer.getChannelData(1);
+            const length = left.length;
+
+            // Create new buffers for instrumental and vocals
+            instrumentalBuffer = audioContext.createBuffer(2, length, originalBuffer.sampleRate);
+            const instrumentalL = instrumentalBuffer.getChannelData(0);
+            const instrumentalR = instrumentalBuffer.getChannelData(1);
+            
+            vocalBuffer = audioContext.createBuffer(2, length, originalBuffer.sampleRate);
+            const vocalL = vocalBuffer.getChannelData(0);
+            const vocalR = vocalBuffer.getChannelData(1);
+
+            for (let i = 0; i < length; i++) {
+                // Instrumental is the difference between channels (L-R)
+                const difference = left[i] - right[i];
+                instrumentalL[i] = difference / 2;
+                instrumentalR[i] = difference / 2;
+                
+                // Vocals are what was removed (Original - Instrumental)
+                vocalL[i] = left[i] - instrumentalL[i];
+                vocalR[i] = right[i] - instrumentalR[i];
+            }
+            
+            instrumentalBlobUrl = URL.createObjectURL(bufferToWave(instrumentalBuffer));
+            vocalBlobUrl = URL.createObjectURL(bufferToWave(vocalBuffer));
+            resolve();
+        });
+    }
+
+    trackButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const trackType = e.currentTarget.dataset.track;
+            
+            trackButtons.forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-800');
+            });
+            e.currentTarget.classList.add('bg-indigo-600', 'text-white');
+            e.currentTarget.classList.remove('bg-gray-200', 'text-gray-800');
+
+            let url, downloadName;
+            if (trackType === 'instrumental') {
+                url = instrumentalBlobUrl;
+                downloadName = `${fileName}_instrumental.wav`;
+                downloadLink.textContent = "Download Instrumental";
+            } else if (trackType === 'vocals') {
+                url = vocalBlobUrl;
+                downloadName = `${fileName}_vocals.wav`;
+                downloadLink.textContent = "Download Vocals";
+            } else {
+                url = originalBlobUrl;
+                downloadName = `${fileName}_original.wav`;
+                downloadLink.textContent = "Download Original";
+            }
+            audioPlayer.src = url;
+            downloadLink.download = downloadName;
+            downloadLink.href = url;
+            audioPlayer.play();
+        });
+    });
+
+    function resetApp() {
+        if(originalBlobUrl) URL.revokeObjectURL(originalBlobUrl);
+        if(instrumentalBlobUrl) URL.revokeObjectURL(instrumentalBlobUrl);
+        if(vocalBlobUrl) URL.revokeObjectURL(vocalBlobUrl);
+        originalBuffer = instrumentalBuffer = vocalBuffer = null;
+        originalBlobUrl = instrumentalBlobUrl = vocalBlobUrl = null;
+        audioFileInput.value = '';
+        uploadView.classList.remove('hidden');
+        editorView.classList.add('hidden');
+        loadingView.classList.add('hidden');
+        trackButtons.forEach((btn, index) => {
+             btn.classList.remove('bg-indigo-600', 'text-white');
+             btn.classList.add('bg-gray-200', 'text-gray-800');
+             if (index === 0) {
+                btn.classList.add('bg-indigo-600', 'text-white');
+                btn.classList.remove('bg-gray-200', 'text-gray-800');
+             }
+        });
+    }
+    
+    function bufferToWave(abuffer) {
+        const numOfChan = abuffer.numberOfChannels, length = abuffer.length * numOfChan * 2 + 44, buffer = new ArrayBuffer(length), view = new DataView(buffer), sampleRate = abuffer.sampleRate; let pos = 0;
+        const setUint16 = (data) => { view.setUint16(pos, data, true); pos += 2; }; const setUint32 = (data) => { view.setUint32(pos, data, true); pos += 4; };
+        setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157); setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan); setUint32(sampleRate); setUint32(sampleRate * 2 * numOfChan); setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
+        const channels = []; for (let i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
+        let offset = 0;
+        while (pos < length) {
+            for (let i = 0; i < numOfChan; i++) {
+                let sample = Math.max(-1, Math.min(1, channels[i][offset])); sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                view.setInt16(pos, sample, true); pos += 2;
+            }
+            offset++;
+        }
+        return new Blob([buffer], {type: "audio/wav"});
+    }
+    </script>
+</body>
+</html>

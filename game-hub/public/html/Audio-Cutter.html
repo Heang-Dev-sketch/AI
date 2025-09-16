@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Audio Cutter | Trim Audio Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .file-drop-zone {
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+        .file-drop-zone.dragover {
+            background-color: #e0e7ff;
+            border-color: #4f46e5;
+        }
+        #waveform {
+            cursor: crosshair;
+        }
+        .loader {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 antialiased">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i data-lucide="scissors" class="text-indigo-600 w-7 h-7"></i>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-900">AI Audio Cutter</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div class="max-w-4xl mx-auto">
+            <!-- Hero Section -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Online Audio Trimmer</h1>
+                <p class="mt-4 text-lg text-gray-600">
+                    Trim or cut audio files directly in your browser. Simple, fast, and no software installation required.
+                </p>
+            </div>
+
+            <!-- Main Application -->
+            <div id="app" class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg border border-gray-200">
+                
+                <!-- 1. Upload View -->
+                <div id="upload-view">
+                    <input type="file" id="audio-file-input" class="hidden" accept="audio/*">
+                    <label for="audio-file-input" id="file-drop-zone" class="file-drop-zone flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 mb-4 text-gray-500"></i>
+                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p class="text-xs text-gray-500">MP3, WAV, OGG, M4A, etc.</p>
+                        </div>
+                    </label>
+                </div>
+                
+                <!-- 2. Loading View -->
+                <div id="loading-view" class="hidden text-center py-16">
+                    <div class="loader mx-auto"></div>
+                    <p class="mt-4 text-lg font-medium text-gray-600">Processing audio...</p>
+                </div>
+
+                <!-- 3. Editor View -->
+                <div id="editor-view" class="hidden">
+                    <div class="mb-4">
+                        <canvas id="waveform" class="w-full h-32 bg-gray-100 rounded-lg"></canvas>
+                    </div>
+                    
+                    <!-- Controls -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div class="flex justify-center md:justify-start gap-2">
+                            <button id="play-btn" class="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition"><i data-lucide="play"></i></button>
+                            <button id="pause-btn" class="p-3 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition hidden"><i data-lucide="pause"></i></button>
+                             <button id="preview-btn" class="p-3 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition" title="Preview Trimmed Selection"><i data-lucide="ear"></i></button>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-2 text-sm font-mono">
+                            <div>
+                               <label for="start-time" class="block text-xs font-medium text-gray-500">Start</label>
+                               <input type="text" id="start-time" value="0.00" class="w-20 text-center bg-gray-50 border border-gray-300 rounded-md p-1">
+                            </div>
+                            <span>-</span>
+                            <div>
+                                <label for="end-time" class="block text-xs font-medium text-gray-500">End</label>
+                                <input type="text" id="end-time" value="0.00" class="w-20 text-center bg-gray-50 border border-gray-300 rounded-md p-1">
+                           </div>
+                        </div>
+
+                        <div class="flex justify-center md:justify-end gap-2">
+                           <button id="reset-btn" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition text-sm">Reset</button>
+                           <button id="trim-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition text-sm">Cut Audio</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Download View -->
+            <div id="download-view" class="hidden text-center mt-8">
+                 <h2 class="text-2xl font-bold text-gray-900">Your Audio is Ready!</h2>
+                 <a id="download-link" class="mt-4 inline-block bg-green-500 text-white font-bold text-lg px-8 py-4 rounded-lg hover:bg-green-600 transition-all">
+                    Download Trimmed Audio
+                 </a>
+                 <button id="cut-another-btn" class="mt-4 block mx-auto text-indigo-600 hover:underline">Cut Another File</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // DOM Elements
+    const uploadView = document.getElementById('upload-view');
+    const loadingView = document.getElementById('loading-view');
+    const editorView = document.getElementById('editor-view');
+    const downloadView = document.getElementById('download-view');
+    
+    const audioFileInput = document.getElementById('audio-file-input');
+    const fileDropZone = document.getElementById('file-drop-zone');
+
+    const waveformCanvas = document.getElementById('waveform');
+    const playBtn = document.getElementById('play-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const previewBtn = document.getElementById('preview-btn');
+    const startTimeInput = document.getElementById('start-time');
+    const endTimeInput = document.getElementById('end-time');
+    const resetBtn = document.getElementById('reset-btn');
+    const trimBtn = document.getElementById('trim-btn');
+    
+    const downloadLink = document.getElementById('download-link');
+    const cutAnotherBtn = document.getElementById('cut-another-btn');
+
+    // App State
+    let audioContext;
+    let originalBuffer;
+    let sourceNode;
+    let fileName = 'trimmed_audio.wav';
+    let selectionStart = 0;
+    let selectionEnd = 0;
+
+    // Web Audio API check
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    try {
+        audioContext = new AudioContext();
+    } catch (e) {
+        alert('Web Audio API is not supported in this browser');
+    }
+
+    // --- File Handling ---
+    fileDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileDropZone.classList.add('dragover');
+    });
+    fileDropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        fileDropZone.classList.remove('dragover');
+    });
+    fileDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileDropZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+    audioFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        fileName = file.name.replace(/\.[^/.]+$/, "") + '_trimmed.wav';
+        uploadView.classList.add('hidden');
+        loadingView.classList.remove('hidden');
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            audioContext.decodeAudioData(e.target.result, (buffer) => {
+                originalBuffer = buffer;
+                selectionEnd = buffer.duration;
+                updateTimeInputs();
+                drawWaveform(buffer);
+                loadingView.classList.add('hidden');
+                editorView.classList.remove('hidden');
+            }, (error) => {
+                alert('Error decoding audio data: ' + error.err);
+                resetApp();
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    }
+    
+    // --- Waveform Drawing ---
+    function drawWaveform(buffer) {
+        const canvas = waveformCanvas;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        const data = buffer.getChannelData(0);
+        const step = Math.ceil(data.length / width);
+        const amp = height / 2;
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = '#6366f1'; // Indigo color
+
+        for (let i = 0; i < width; i++) {
+            let min = 1.0;
+            let max = -1.0;
+            for (let j = 0; j < step; j++) {
+                const datum = data[(i * step) + j];
+                if (datum < min) min = datum;
+                if (datum > max) max = datum;
+            }
+            ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
+        }
+        drawSelection();
+    }
+
+    function drawSelection() {
+        const canvas = waveformCanvas;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        const startX = (selectionStart / originalBuffer.duration) * width;
+        const endX = (selectionEnd / originalBuffer.duration) * width;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        // Clear area
+        ctx.clearRect(0, 0, startX, height);
+        ctx.clearRect(endX, 0, width - endX, height);
+        // Dimmed areas
+        ctx.fillRect(0, 0, startX, height);
+        ctx.fillRect(endX, 0, width - endX, height);
+    }
+
+    // --- Audio Playback ---
+    function stopPlayback() {
+        if (sourceNode) {
+            sourceNode.stop();
+            sourceNode = null;
+        }
+        playBtn.classList.remove('hidden');
+        pauseBtn.classList.add('hidden');
+    }
+
+    playBtn.addEventListener('click', () => {
+        stopPlayback();
+        sourceNode = audioContext.createBufferSource();
+        sourceNode.buffer = originalBuffer;
+        sourceNode.connect(audioContext.destination);
+        sourceNode.start(0);
+        playBtn.classList.add('hidden');
+        pauseBtn.classList.remove('hidden');
+        sourceNode.onended = stopPlayback;
+    });
+
+    pauseBtn.addEventListener('click', stopPlayback);
+
+    previewBtn.addEventListener('click', () => {
+        stopPlayback();
+        sourceNode = audioContext.createBufferSource();
+        sourceNode.buffer = originalBuffer;
+        sourceNode.connect(audioContext.destination);
+        const duration = selectionEnd - selectionStart;
+        if (duration > 0) {
+            sourceNode.start(0, selectionStart, duration);
+            playBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+            sourceNode.onended = stopPlayback;
+        }
+    });
+
+    // --- Selection and Trimming ---
+    let isDragging = false;
+    let dragStartX = 0;
+
+    waveformCanvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        dragStartX = e.offsetX;
+        selectionStart = (dragStartX / waveformCanvas.width) * originalBuffer.duration;
+        selectionEnd = selectionStart;
+        updateWaveformAndTimes();
+    });
+
+    waveformCanvas.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            const currentX = e.offsetX;
+            const startTime = (dragStartX / waveformCanvas.width) * originalBuffer.duration;
+            const endTime = (currentX / waveformCanvas.width) * originalBuffer.duration;
+            selectionStart = Math.min(startTime, endTime);
+            selectionEnd = Math.max(startTime, endTime);
+            updateWaveformAndTimes();
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+    
+    startTimeInput.addEventListener('change', handleTimeInputChange);
+    endTimeInput.addEventListener('change', handleTimeInputChange);
+    
+    function handleTimeInputChange() {
+        const start = parseFloat(startTimeInput.value);
+        const end = parseFloat(endTimeInput.value);
+        if (!isNaN(start) && !isNaN(end)) {
+            selectionStart = Math.max(0, Math.min(start, originalBuffer.duration));
+            selectionEnd = Math.max(selectionStart, Math.min(end, originalBuffer.duration));
+            updateWaveformAndTimes();
+        }
+    }
+
+    function updateWaveformAndTimes() {
+        drawWaveform(originalBuffer);
+        updateTimeInputs();
+    }
+    
+    function updateTimeInputs() {
+        startTimeInput.value = selectionStart.toFixed(2);
+        endTimeInput.value = selectionEnd.toFixed(2);
+    }
+    
+    resetBtn.addEventListener('click', () => {
+        selectionStart = 0;
+        selectionEnd = originalBuffer.duration;
+        updateWaveformAndTimes();
+    });
+
+    trimBtn.addEventListener('click', () => {
+        trimBtn.disabled = true;
+        trimBtn.textContent = 'Cutting...';
+        
+        const duration = selectionEnd - selectionStart;
+        if(duration <= 0) {
+            alert('Invalid selection. End time must be after start time.');
+            trimBtn.disabled = false;
+            trimBtn.textContent = 'Cut Audio';
+            return;
+        }
+        
+        const startOffset = Math.floor(selectionStart * originalBuffer.sampleRate);
+        const endOffset = Math.floor(selectionEnd * originalBuffer.sampleRate);
+        const frameCount = endOffset - startOffset;
+
+        const newBuffer = audioContext.createBuffer(
+            originalBuffer.numberOfChannels,
+            frameCount,
+            originalBuffer.sampleRate
+        );
+
+        for (let i = 0; i < originalBuffer.numberOfChannels; i++) {
+            const oldData = originalBuffer.getChannelData(i);
+            const newData = newBuffer.getChannelData(i);
+            newData.set(oldData.subarray(startOffset, endOffset));
+        }
+
+        const wavBlob = bufferToWave(newBuffer);
+        const url = URL.createObjectURL(wavBlob);
+        downloadLink.href = url;
+        downloadLink.download = fileName;
+
+        editorView.classList.add('hidden');
+        downloadView.classList.remove('hidden');
+        trimBtn.disabled = false;
+        trimBtn.textContent = 'Cut Audio';
+    });
+    
+    cutAnotherBtn.addEventListener('click', resetApp);
+    
+    function resetApp() {
+        stopPlayback();
+        originalBuffer = null;
+        selectionStart = 0;
+        selectionEnd = 0;
+        
+        uploadView.classList.remove('hidden');
+        editorView.classList.add('hidden');
+        downloadView.classList.add('hidden');
+        loadingView.classList.add('hidden');
+        
+        audioFileInput.value = ''; // Clear file input
+    }
+    
+    // --- WAV Encoding ---
+    function bufferToWave(abuffer) {
+        const numOfChan = abuffer.numberOfChannels,
+              length = abuffer.length * numOfChan * 2 + 44,
+              buffer = new ArrayBuffer(length),
+              view = new DataView(buffer),
+              channels = [],
+              sampleRate = abuffer.sampleRate;
+
+        let offset = 0,
+            pos = 0;
+
+        // Helper function
+        const setUint16 = (data) => {
+            view.setUint16(pos, data, true);
+            pos += 2;
+        }
+        const setUint32 = (data) => {
+            view.setUint32(pos, data, true);
+            pos += 4;
+        }
+
+        // Write WAVE header
+        setUint32(0x46464952); // "RIFF"
+        setUint32(length - 8); // file length - 8
+        setUint32(0x45564157); // "WAVE"
+
+        setUint32(0x20746d66); // "fmt " chunk
+        setUint32(16); // length = 16
+        setUint16(1); // PCM (uncompressed)
+        setUint16(numOfChan);
+        setUint32(sampleRate);
+        setUint32(sampleRate * 2 * numOfChan); // avg. bytes/sec
+        setUint16(numOfChan * 2); // block-align
+        setUint16(16); // 16-bit
+        
+        setUint32(0x61746164); // "data" - chunk
+        setUint32(length - pos - 4); // chunk length
+
+        // Write PCM samples
+        for (let i = 0; i < abuffer.numberOfChannels; i++) {
+            channels.push(abuffer.getChannelData(i));
+        }
+
+        while (pos < length) {
+            for (let i = 0; i < numOfChan; i++) {
+                let sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
+                sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0; // scale to 16-bit signed int
+                view.setInt16(pos, sample, true);
+                pos += 2;
+            }
+            offset++;
+        }
+
+        return new Blob([buffer], {type: "audio/wav"});
+    }
+    
+    // Initial resize to fit canvas drawing buffer
+    window.addEventListener('resize', () => {
+        if(originalBuffer) {
+            drawWaveform(originalBuffer);
+        }
+    });
+
+</script>
+</body>
+</html>

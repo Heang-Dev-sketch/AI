@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Equation Solver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.5.0/math.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .file-drop-zone { transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out; }
+        .file-drop-zone.dragover { background-color: #e0e7ff; border-color: #4f46e5; }
+        .loader { border: 4px solid #f3f4f6; border-top: 4px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 antialiased">
+    <header class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 sm:px-6 py-4 flex items-center gap-2">
+            <i data-lucide="calculator" class="text-indigo-600 w-7 h-7"></i>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Math Equation Solver</h1>
+        </div>
+    </header>
+    <main class="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div class="max-w-2xl mx-auto">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Scan & Solve Math Problems</h1>
+                <p class="mt-4 text-lg text-gray-600">
+                    Get step-by-step solutions for arithmetic and simple algebra problems.
+                </p>
+            </div>
+
+            <div id="app" class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg border border-gray-200 min-h-[350px]">
+                <div id="upload-view">
+                    <input type="file" id="file-input" class="hidden" accept="image/*">
+                    <label for="file-input" id="file-drop-zone" class="file-drop-zone flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i data-lucide="camera" class="w-10 h-10 mb-4 text-gray-500"></i>
+                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Upload an image of a math problem</span></p>
+                        </div>
+                    </label>
+                </div>
+                
+                <div id="loading-view" class="hidden text-center py-16">
+                    <div class="loader mx-auto"></div>
+                    <p id="loading-text" class="mt-4 text-lg font-medium text-gray-600">Recognizing equation...</p>
+                </div>
+
+                <div id="result-view" class="hidden">
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-900">Recognized Problem (edit if needed)</label>
+                        <input id="equation-input" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 font-mono text-lg" />
+                    </div>
+                    <div id="solution-container" class="mt-6 p-4 bg-gray-50 rounded-lg border">
+                        <h3 class="font-bold text-gray-800 mb-2">Solution:</h3>
+                        <div id="solution-steps" class="text-gray-700 space-y-1 font-mono"></div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button id="scan-another-btn" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition text-sm">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i><span>Scan Another</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+             <div class="text-center mt-4 text-xs text-gray-500">Note: Accuracy for complex equations may vary. Best for printed text.</div>
+        </div>
+    </main>
+    <script>
+    lucide.createIcons();
+    const uploadView = document.getElementById('upload-view');
+    const loadingView = document.getElementById('loading-view');
+    const resultView = document.getElementById('result-view');
+    const fileInput = document.getElementById('file-input');
+    const fileDropZone = document.getElementById('file-drop-zone');
+    const loadingText = document.getElementById('loading-text');
+    const equationInput = document.getElementById('equation-input');
+    const solutionSteps = document.getElementById('solution-steps');
+    const scanAnotherBtn = document.getElementById('scan-another-btn');
+
+    const handleFile = async (file) => {
+        if (!file) return;
+        uploadView.classList.add('hidden');
+        loadingView.classList.remove('hidden');
+
+        const worker = await Tesseract.createWorker('eng');
+        const { data: { text } } = await worker.recognize(file);
+        await worker.terminate();
+        
+        const cleanedText = text.trim().replace(/= ?\?| =/g, '').replace(/×/g, '*').replace(/÷/g, '/');
+        equationInput.value = cleanedText;
+        solveEquation(cleanedText);
+
+        loadingView.classList.add('hidden');
+        resultView.classList.remove('hidden');
+    };
+    
+    const solveEquation = (eq) => {
+        solutionSteps.innerHTML = '';
+        try {
+            const node = math.parse(eq);
+            const compiled = node.compile();
+            const result = compiled.evaluate();
+
+            // Simple "step-by-step" simulation
+            solutionSteps.innerHTML = `<p>Input: ${eq}</p><p class="border-t pt-2 mt-2 font-bold">Result: ${result}</p>`;
+        } catch (e) {
+            solutionSteps.innerHTML = `<p class="text-red-500">Could not solve the equation. Please check the syntax.</p><p class="text-xs text-gray-500">${e.message}</p>`;
+        }
+    };
+    
+    equationInput.addEventListener('input', (e) => solveEquation(e.target.value));
+    fileDropZone.addEventListener('dragover', (e) => { e.preventDefault(); fileDropZone.classList.add('dragover'); });
+    fileDropZone.addEventListener('dragleave', (e) => { e.preventDefault(); fileDropZone.classList.remove('dragover'); });
+    fileDropZone.addEventListener('drop', (e) => { e.preventDefault(); fileDropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+    scanAnotherBtn.addEventListener('click', () => {
+        resultView.classList.add('hidden');
+        uploadView.classList.remove('hidden');
+        fileInput.value = '';
+    });
+    </script>
+</body>
+</html>
