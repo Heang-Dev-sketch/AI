@@ -1,633 +1,680 @@
- // --- Page Navigation & Setup ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const pages = document.querySelectorAll('.page-content');
-            const navLinks = document.querySelectorAll('.nav-link');
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-
-            window.showPage = (pageId) => {
-                document.querySelector('main').classList.toggle('p-0', pageId === 'smart-ai');
-                document.querySelector('main').classList.toggle('container', pageId !== 'smart-ai');
-                document.querySelector('main').classList.toggle('mx-auto', pageId !== 'smart-ai');
-                document.querySelector('main').classList.toggle('px-4', pageId !== 'smart-ai');
-                document.querySelector('main').classList.toggle('sm:px-6', pageId !== 'smart-ai');
-                document.querySelector('main').classList.toggle('lg:px-8', pageId !== 'smart-ai');
-                document.querySelector('main').classList.toggle('py-8', pageId !== 'smart-ai');
-                document.querySelector('main').classList.toggle('md:py-12', pageId !== 'smart-ai');
-
-                pages.forEach(page => page.classList.remove('active'));
-                const targetPage = document.getElementById(pageId);
-                if (targetPage) targetPage.classList.add('active');
-                
-                navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('onclick').includes(`'${pageId}'`)) {
-                        link.classList.add('active');
-                    }
-                });
-                if(mobileMenu) mobileMenu.classList.add('hidden');
-                if (pageId !== 'categories') {
-                    window.scrollTo(0, 0);
-                }
-            }
-            
-            if(mobileMenuButton) mobileMenuButton.addEventListener('click', () => {
-                if(mobileMenu) mobileMenu.classList.toggle('hidden');
-            });
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tools ខ្មែរ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Koulen&family=Noto+Sans+Khmer:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.102/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Noto Sans Khmer', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Koulen', cursive;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .nav-link.active {
+            color: #ffffff;
+            background-color: #2563eb; /* blue-600 */
+        }
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+        }
+        /* For better button feedback */
+        .btn-action {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+        @keyframes scroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-100%); }
+        }
+        @keyframes scroll-reverse {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        .animate-scroll {
+            animation: scroll 80s linear infinite;
+        }
+        .animate-scroll-reverse {
+            animation: scroll-reverse 80s linear infinite;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        #sticky-ai-menu-categories:hover .animate-scroll,
+        #sticky-ai-menu-categories:hover .animate-scroll-reverse {
+            animation-play-state: paused;
+        }
         
-            showPage('home');
-            const currentYearEl = document.getElementById('current-year');
-            if(currentYearEl) currentYearEl.textContent = new Date().getFullYear();
-        });
+        /* --- Chatbot Styles --- */
+        #smart-ai.active {
+            height: calc(100vh - 64px); /* Full screen minus header */
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-message {
+            max-width: 90%;
+            word-wrap: break-word;
+        }
+        .chat-message span {
+             white-space: pre-wrap;
+        }
+        .user-message {
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+        }
+        .user-message-wrapper {
+             justify-content: flex-end;
+        }
+        .ai-message {
+            background-color: #e5e7eb; /* gray-200 */
+            color: #1f2937; /* gray-800 */
+            align-self: flex-start;
+        }
+        .typing-indicator {
+            align-self: flex-start;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #9ca3af; /* gray-400 */
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
 
-        // --- All Tooling Logic ---
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            // --- Smart AI Chatbot Logic ---
-            const smartAiPage = document.getElementById('smart-ai');
-            if (smartAiPage) {
-                const chatbox = document.getElementById('smart-ai-chatbox');
-                const userInput = document.getElementById('smart-ai-input');
-                const sendBtn = document.getElementById('smart-ai-send-btn');
-                const imageUploadInput = document.getElementById('smart-ai-image-upload');
-                const imagePreviewContainer = document.getElementById('image-preview-container');
-                const codePreviewModal = document.getElementById('code-preview-modal');
-                const previewIframe = document.getElementById('preview-iframe');
-                const closePreviewBtn = document.getElementById('close-preview-btn');
-                let uploadedImageData = null;
-                let uploadedImageType = null;
+        /* --- Code Editor Styles --- */
+        .editor-tab-btn {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background-color: #1f2937; /* gray-800 */
+            color: #d1d5db; /* gray-300 */
+            transition: all 0.2s ease-in-out;
+            border-bottom: 3px solid transparent;
+        }
+        .editor-tab-btn:hover {
+            background-color: #374151; /* gray-700 */
+            color: white;
+        }
+        .editor-tab-btn.active {
+            color: white;
+            background-color: #4b5563; /* gray-600 */
+            border-bottom-color: #3b82f6; /* blue-500 */
+        }
+        .editor-tab-panel {
+            display: none;
+        }
+        .editor-tab-panel.active {
+            display: block;
+        }
+        .code-textarea {
+            background-color: #111827; /* gray-900 */
+            color: #f3f4f6; /* gray-100 */
+            caret-color: #3b82f6; /* blue-500 */
+            font-family: 'Courier New', Courier, monospace;
+        }
 
-                const API_KEY = "AIzaSyCGeAhRrYpYR3K_GxCIOu0oMm7dk5Q84W0"; 
-                const CONVERSATION_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
-                const IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${API_KEY}`;
-                let conversationHistory = [];
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
 
-                const openPreviewModal = (code) => {
-                    previewIframe.srcdoc = code;
-                    codePreviewModal.classList.remove('hidden');
-                    codePreviewModal.classList.add('flex');
-                };
-                const closePreviewModal = () => {
-                    codePreviewModal.classList.add('hidden');
-                    codePreviewModal.classList.remove('flex');
-                    previewIframe.srcdoc = '';
-                };
-                if(closePreviewBtn) closePreviewBtn.addEventListener('click', closePreviewModal);
+    <!-- Header and Navigation -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="#" onclick="showPage('home')" class="text-2xl font-bold text-blue-600">AI Tools ខ្មែរ</a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a onclick="showPage('home')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium active">ទំព័រដើម</a>
+                        <a onclick="showPage('categories')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">ប្រភេទ</a>
+                        <a onclick="showPage('smart-ai')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Smart AI</a>
+                        <a onclick="showPage('code-editor')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">កម្មវិធីសរសេរកូដ</a>
+                        <a onclick="showPage('features')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">អត្ថប្រយោជន៍</a>
+                        <a onclick="showPage('contact')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">ទំនាក់ទំនង</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </nav>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a onclick="showPage('home')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium active">ទំព័រដើម</a>
+                <a onclick="showPage('categories')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">ប្រភេទ</a>
+                <a onclick="showPage('smart-ai')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Smart AI</a>
+                <a onclick="showPage('code-editor')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">កម្មវិធីសរសេរកូដ</a>
+                <a onclick="showPage('features')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">អត្ថប្រយោជន៍</a>
+                <a onclick="showPage('contact')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">ទំនាក់ទំនង</a>
+            </div>
+        </div>
+    </header>
 
-                if(imageUploadInput) imageUploadInput.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const base64String = event.target.result.split(',')[1];
-                        uploadedImageData = base64String;
-                        uploadedImageType = file.type;
-                        imagePreviewContainer.innerHTML = `<div class="relative inline-block"><img src="${event.target.result}" class="h-16 w-16 object-cover rounded-md"><button onclick="removeImagePreview()" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs">&times;</button></div>`;
-                    };
-                    reader.readAsDataURL(file);
-                    imageUploadInput.value = '';
-                });
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
 
-                window.removeImagePreview = () => {
-                    uploadedImageData = null;
-                    uploadedImageType = null;
-                    imagePreviewContainer.innerHTML = '';
-                };
+        <!-- Home Page -->
+        <section id="home" class="page-content active">
+            <div class="text-center bg-white p-8 md:p-12 rounded-lg shadow-lg">
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">សូមស្វាគមន៍មកកាន់ពិភពនៃ AI</h1>
+                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+                    ឧបករណ៍បញ្ញាសិប្បនិម្មិត (AI) គឺជាកម្មវិធីកុំព្យូទ័រទំនើបដែលអាចជួយយើងក្នុងកិច្ចការជាច្រើនប្រចាំថ្ងៃ។ វាមិនមែនជារឿងស្មុគស្មាញទៀតទេ តែជាជំនួយការដ៏ឆ្លាតវៃសម្រាប់មនុស្សគ្រប់គ្នា។
+                </p>
+                <button onclick="showPage('categories')" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-700 transition duration-300 text-lg">ស្វែងយល់បន្ថែម</button>
+            </div>
+            <div class="mt-16 bg-white p-8 md:p-12 rounded-lg shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h2 class="text-3xl md:text-4xl text-blue-700 mb-4">អំពីគម្រោងនេះ</h2>
+                        <p class="text-gray-600 mb-6 leading-relaxed">
+                            AI Tools ខ្មែរ គឺជាគម្រោងមួយដែលបង្កើតឡើងក្នុងគោលបំណងផ្ដល់នូវឧបករណ៍ AI ដែលមានប្រយោជន៍ និងងាយស្រួលប្រើប្រាស់សម្រាប់អ្នកប្រើប្រាស់ជាភាសាខ្មែរ។ គ្រប់ឧបករណ៍ទាំងអស់ដំណើរការដោយផ្ទាល់នៅក្នុងកម្មវិធីរុករករបស់អ្នក ដោយមិនចាំបាច់ដំឡើងកម្មវិធីបន្ថែម ឬភ្ជាប់ទៅសេវាកម្មខាងក្រៅឡើយ។ យើងជឿជាក់ថាបច្ចេកវិទ្យាគួរតែអាចបានសម្រាប់មនុស្សគ្រប់គ្នា។
+                        </p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-8 w-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">ឥតគិតថ្លៃ និងបើកចំហ</h4>
+                                <p class="text-gray-600">ប្រើប្រាស់គ្រប់ឧបករណ៍ដោយសេរី ដោយគ្មានការចំណាយ។</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                             <div class="flex-shrink-0 h-8 w-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" /></svg>
+                             </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">ផ្តោតលើភាសាខ្មែរ</h4>
+                                <p class="text-gray-600">បង្កើតឡើងដោយយល់ពីតម្រូវការរបស់អ្នកប្រើប្រាស់ខ្មែរ។</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                             <div class="flex-shrink-0 h-8 w-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                             </div>
+                             <div>
+                                <h4 class="font-semibold text-lg">ការពារឯកជនភាព</h4>
+                                <p class="text-gray-600">ទិន្នន័យរបស់អ្នកត្រូវបានដំណើរការនៅលើឧបករណ៍របស់អ្នកតែប៉ុណ្ណោះ។</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <h3 class="text-2xl font-bold mb-2">ល្បឿនលឿន</h3>
+                    <p class="text-gray-600">បំពេញការងារស្មុគស្មាញបានក្នុងរយៈពេលខ្លី។</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                     <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                    <h3 class="text-2xl font-bold mb-2">ភាពឆ្លាតវៃ</h3>
+                    <p class="text-gray-600">យល់ពីតម្រូវការ និងផ្តល់ដំណោះស្រាយដ៏ល្អបំផុត។</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+                    <h3 class="text-2xl font-bold mb-2">ភាពច្នៃប្រឌិត</h3>
+                    <p class="text-gray-600">បង្កើតគំនិតថ្មីៗ ទាំងការសរសេរ និងការរចនា។</p>
+                </div>
+            </div>
+        </section>
 
-                const createChatBubble = (message, sender) => {
-                    const bubbleWrapper = document.createElement('div');
-                    bubbleWrapper.className = `flex w-full mt-2 space-x-3 max-w-full ${sender === 'user' ? 'user-message-wrapper' : ''}`;
-                    const bubble = document.createElement('div');
-                    bubble.className = `chat-message p-3 rounded-lg ${sender === 'user' ? 'user-message' : 'ai-message'}`;
-                    const messageSpan = document.createElement('span');
-                    messageSpan.textContent = message;
-                    bubble.appendChild(messageSpan);
-                    const codeRegex = /```html\n([\s\S]*?)\n```/;
-                    const codeMatch = message.match(codeRegex);
-                    if (codeMatch && codeMatch[1]) {
-                        const code = codeMatch[1];
-                        const previewButton = document.createElement('button');
-                        previewButton.textContent = 'Run Preview';
-                        previewButton.className = 'btn-action mt-3 w-full bg-gray-700 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-800';
-                        previewButton.onclick = () => openPreviewModal(code);
-                        bubble.appendChild(previewButton);
-                    }
-                    bubbleWrapper.appendChild(bubble);
-                    return bubbleWrapper;
-                };
-                
-                const createImageBubble = (imageUrl) => {
-                    const bubbleWrapper = document.createElement('div');
-                    bubbleWrapper.className = `flex w-full mt-2 space-x-3 max-w-full`;
-                    const bubble = document.createElement('div');
-                    bubble.className = `chat-message p-2 rounded-lg ai-message`;
-                    const img = document.createElement('img');
-                    img.src = imageUrl;
-                    img.className = 'rounded-md max-w-xs';
-                    bubble.appendChild(img);
-                    bubbleWrapper.appendChild(bubble);
-                    return bubbleWrapper;
-                }
+        <!-- Categories Page -->
+        <section id="categories" class="page-content">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">ឧបករណ៍ AI សម្រាប់ប្រើប្រាស់</h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">សាកល្បងប្រើប្រាស់ឧបករណ៍ AI ខាងក្រោមដោយផ្ទាល់នៅលើគេហទំព័រនេះ។</p>
+            </div>
+             <div id="sticky-ai-menu-categories" class="sticky top-16 bg-white py-2 shadow-lg z-40 mb-12 rounded-lg">
+                <div class="flex overflow-x-auto no-scrollbar">
+                    <div class="flex animate-scroll">
+                        <div class="flex items-center flex-shrink-0">
+                            <a href="#tool-image-to-text" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងរូបភាពជាអក្សរ</a>
+                            <a href="#tool-pdf-to-text" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែង PDF ជាអក្សរ</a>
+                            <a href="#tool-text-to-pdf" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងអក្សរជា PDF</a>
+                            <a href="#tool-text-to-voice" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងអក្សរជាសំឡេង</a>
+                            <a href="#tool-voice-changer" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">ប្ដូរសំឡេង</a>
+                            <a href="#tool-qr-generator" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បង្កើតកូដ QR</a>
+                            <a href="#tool-qr-reader" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">អានកូដ QR</a>
+                            <a href="#tool-color-picker" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">ឧបករណ៍ជ្រើសរើសពណ៌</a>
+                        </div>
+                        <div class="flex items-center flex-shrink-0" aria-hidden="true">
+                           <a href="#tool-image-to-text" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងរូបភាពជាអក្សរ</a>
+                            <a href="#tool-pdf-to-text" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែង PDF ជាអក្សរ</a>
+                            <a href="#tool-text-to-pdf" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងអក្សរជា PDF</a>
+                            <a href="#tool-text-to-voice" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងអក្សរជាសំឡេង</a>
+                            <a href="#tool-voice-changer" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">ប្ដូរសំឡេង</a>
+                            <a href="#tool-qr-generator" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បង្កើតកូដ QR</a>
+                            <a href="#tool-qr-reader" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">អានកូដ QR</a>
+                            <a href="#tool-color-picker" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">ឧបករណ៍ជ្រើសរើសពណ៌</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex mt-2 overflow-x-auto no-scrollbar">
+                    <div class="flex animate-scroll-reverse">
+                        <div class="flex items-center flex-shrink-0">
+                             <a href="#tool-image-to-text" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងរូបភាពជាអក្សរ</a>
+                            <a href="#tool-pdf-to-text" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែង PDF ជាអក្សរ</a>
+                            <a href="#tool-text-to-pdf" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងអក្សរជា PDF</a>
+                            <a href="#tool-text-to-voice" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងអក្សរជាសំឡេង</a>
+                            <a href="#tool-voice-changer" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">ប្ដូរសំឡេង</a>
+                            <a href="#tool-qr-generator" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បង្កើតកូដ QR</a>
+                            <a href="#tool-qr-reader" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">អានកូដ QR</a>
+                            <a href="#tool-color-picker" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">ឧបករណ៍ជ្រើសរើសពណ៌</a>
+                        </div>
+                        <div class="flex items-center flex-shrink-0" aria-hidden="true">
+                            <a href="#tool-image-to-text" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងរូបភាពជាអក្សរ</a>
+                            <a href="#tool-pdf-to-text" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែង PDF ជាអក្សរ</a>
+                            <a href="#tool-text-to-pdf" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងអក្សរជា PDF</a>
+                            <a href="#tool-text-to-voice" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បំប្លែងអក្សរជាសំឡេង</a>
+                            <a href="#tool-voice-changer" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">ប្ដូរសំឡេង</a>
+                            <a href="#tool-qr-generator" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">បង្កើតកូដ QR</a>
+                            <a href="#tool-qr-reader" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">អានកូដ QR</a>
+                            <a href="#tool-color-picker" class="mx-4 text-gray-700 text-sm font-medium hover:text-blue-600 transition-colors">ឧបករណ៍ជ្រើសរើសពណ៌</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-12">
+                <div>
+                    <h2 class="text-3xl font-bold text-blue-700 mb-6 border-b-2 border-blue-200 pb-2">ឧបករណ៍អត្ថបទ និងឯកសារ</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                        <div id="tool-image-to-text" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                            <div class="p-8">
+                                <h3 class="text-2xl font-bold text-blue-600 mb-2">បំប្លែងរូបភាពជាអក្សរ</h3>
+                                <p class="text-gray-600 mb-6">ផ្ទុករូបភាពដែលមានអក្សរ ហើយ AI នឹងដកស្រង់អក្សរជូនអ្នក។</p>
+                                <div class="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                    <input type="file" id="ocr-upload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                                    <button id="ocr-button" class="btn-action w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 flex items-center justify-center">
+                                        <span id="ocr-btn-text">បំប្លែង</span>
+                                        <svg id="ocr-spinner" class="animate-spin ml-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    </button>
+                                    <textarea id="ocr-result" rows="4" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="លទ្ធផល..."></textarea>
+                                    <button id="ocr-download-btn" class="btn-action w-full bg-green-500 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600 flex items-center justify-center" disabled>ទាញយក (.txt)</button>
+                                    <p id="ocr-status" class="text-sm text-gray-500 text-center h-5"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tool-pdf-to-text" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                            <div class="p-8">
+                                <h3 class="text-2xl font-bold text-blue-600 mb-2">បំប្លែង PDF ជាអក្សរ</h3>
+                                <p class="text-gray-600 mb-6">ផ្ទុកឯកសារ PDF ឡើង ដើម្បីដកស្រង់អក្សរទាំងអស់។</p>
+                                <div class="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                    <input type="file" id="pdf-upload" accept="application/pdf" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                                    <button id="pdf-button" class="btn-action w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 flex items-center justify-center">
+                                        <span id="pdf-btn-text">បំប្លែង</span>
+                                        <svg id="pdf-spinner" class="animate-spin ml-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    </button>
+                                    <textarea id="pdf-result" rows="4" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="លទ្ធផល..."></textarea>
+                                    <button id="pdf-download-btn" class="btn-action w-full bg-green-500 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600 flex items-center justify-center" disabled>ទាញយក (.txt)</button>
+                                    <p id="pdf-status" class="text-sm text-gray-500 text-center h-5"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tool-text-to-pdf" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                            <div class="p-8">
+                                <h3 class="text-2xl font-bold text-blue-600 mb-2">បំប្លែងអក្សរជា PDF</h3>
+                                <p class="text-gray-600 mb-6">វាយបញ្ចូលអត្ថបទ ហើយបង្កើតជាឯកសារ PDF។</p>
+                                 <div class="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                    <textarea id="text-to-pdf-input" rows="5" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="សរសេរអ្វីមួយនៅទីនេះ..."></textarea>
+                                    <button id="text-to-pdf-button" class="btn-action w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700">បង្កើត និងទាញយក PDF</button>
+                                    <p class="text-xs text-gray-500 text-center">ចំណាំ៖ អក្សរខ្មែរអាចមិនបង្ហាញត្រឹមត្រូវ។</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold text-blue-700 mb-6 border-b-2 border-blue-200 pb-2">ឧបករណ៍សំឡេង</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                        <div id="tool-text-to-voice" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                            <div class="p-8">
+                                <h3 class="text-2xl font-bold text-blue-600 mb-2">បំប្លែងអក្សរជាសំឡេង</h3>
+                                <p class="text-gray-600 mb-6">វាយបញ្ចូលអត្ថបទដើម្បីស្តាប់ជាសំឡេង។</p>
+                                <div class="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                    <textarea id="tts-input" rows="5" class="w-full rounded-md border-gray-300 shadow-sm">សួស្តីពិភពលោក!</textarea>
+                                    <button id="tts-button" class="btn-action w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700">និយាយ</button>
+                                     <p class="text-xs text-gray-500 text-center">ចំណាំ៖ ការគាំទ្រសំឡេងខ្មែរអាស្រ័យលើ Browser។</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tool-voice-changer" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                            <div class="p-8">
+                                <h3 class="text-2xl font-bold text-blue-600 mb-2">ប្ដូរសំឡេង</h3>
+                                <p class="text-gray-600 mb-6">ផ្លាស់ប្ដូរកម្រិតសំឡេង។ ថត ឬផ្ទុកឯកសារ MP3 ឡើង។</p>
+                                <div class="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                    <input type="file" id="voice-upload" accept="audio/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                                     <div class="relative flex items-center"><div class="flex-grow border-t"></div><span class="flex-shrink mx-4 text-xs text-gray-400">ឬ</span><div class="flex-grow border-t"></div></div>
+                                    <div class="flex space-x-2">
+                                         <button id="start-record-btn" class="btn-action w-full bg-green-500 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600">ថតសំឡេង</button>
+                                         <button id="stop-record-btn" class="btn-action w-full bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600" disabled>ឈប់ថត</button>
+                                    </div>
+                                    <label class="block text-sm">កម្រិតសំឡេង: <span id="pitch-value">1.0</span></label>
+                                    <input type="range" id="pitch-slider" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full">
+                                    <div class="flex space-x-2">
+                                        <button id="play-btn" class="btn-action w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700" disabled>ចាក់</button>
+                                        <button id="voice-download-btn" class="btn-action w-full bg-green-500 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600" disabled>ទាញយក</button>
+                                    </div>
+                                    <p id="voice-changer-status" class="text-sm text-center text-gray-500 h-5"></p>
+                                     <audio id="audio-playback" class="hidden"></audio>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold text-blue-700 mb-6 border-b-2 border-blue-200 pb-2">ឧបករណ៍រចនា និងជំនួយ</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                        <div id="tool-qr-generator" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                            <div class="p-8">
+                                <h3 class="text-2xl font-bold text-blue-600 mb-2">បង្កើតកូដ QR</h3>
+                                <p class="text-gray-600 mb-6">បញ្ចូលអត្ថបទ ឬ URL ដើម្បីបង្កើត QR Code។</p>
+                                 <div class="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                    <input type="text" id="qr-input" class="w-full rounded-md border-gray-300 shadow-sm" value="https://www.google.com"/>
+                                    <button id="qr-button" class="btn-action w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700">បង្កើត</button>
+                                    <div id="qrcode-container" class="w-full flex justify-center p-2 bg-white rounded-md min-h-[196px] items-center">
+                                        <div id="qrcode"></div>
+                                    </div>
+                                    <button id="qr-download-btn" class="btn-action w-full bg-green-500 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600" disabled>ទាញយក (.png)</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tool-qr-reader" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                            <div class="p-8">
+                                <h3 class="text-2xl font-bold text-blue-600 mb-2">អានកូដ QR</h3>
+                                <p class="text-gray-600 mb-6">ផ្ទុករូបភាពកូដ QR ឡើង ដើម្បីដកស្រង់ទិន្នន័យ។</p>
+                                <div class="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                    <input type="file" id="qr-reader-upload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                                    <textarea id="qr-reader-result" rows="4" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="លទ្ធផល..."></textarea>
+                                    <button id="qr-copy-btn" class="btn-action w-full bg-green-500 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600" disabled>ចម្លង</button>
+                                    <p id="qr-reader-status" class="text-sm text-gray-500 text-center h-5"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tool-color-picker" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                            <div class="p-8">
+                                <h3 class="text-2xl font-bold text-blue-600 mb-2">ឧបករណ៍ជ្រើសរើសពណ៌</h3>
+                                <p class="text-gray-600 mb-6">ជ្រើសរើសពណ៌ដើម្បីមើល និងចម្លងកូដពណ៌ផ្សេងៗ។</p>
+                                <div class="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                    <div class="flex justify-center items-center">
+                                        <input type="color" id="color-picker" value="#2563eb" class="w-24 h-24 p-0 border-none cursor-pointer">
+                                    </div>
+                                    <div id="color-display" class="w-full h-16 rounded-md" style="background-color: #2563eb;"></div>
+                                    <div class="space-y-2 pt-2">
+                                        <div class="flex items-center justify-between bg-white p-2 rounded-md">
+                                            <span class="font-mono text-sm">HEX: <span id="color-hex">#2563eb</span></span>
+                                            <button id="copy-hex" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-md btn-action">ចម្លង</button>
+                                        </div>
+                                        <div class="flex items-center justify-between bg-white p-2 rounded-md">
+                                            <span class="font-mono text-sm">RGB: <span id="color-rgb">rgb(37, 99, 235)</span></span>
+                                            <button id="copy-rgb" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-md btn-action">ចម្លង</button>
+                                        </div>
+                                        <div class="flex items-center justify-between bg-white p-2 rounded-md">
+                                            <span class="font-mono text-sm">HSL: <span id="color-hsl">hsl(224, 82%, 53%)</span></span>
+                                            <button id="copy-hsl" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-md btn-action">ចម្លង</button>
+                                        </div>
+                                    </div>
+                                    <p id="color-copy-status" class="text-sm text-center text-green-600 h-5"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                const createUserMessageBubble = (message, imageUrl) => {
-                    const bubbleWrapper = document.createElement('div');
-                    bubbleWrapper.className = 'flex w-full mt-2 space-x-3 max-w-full justify-end';
-                    const bubble = document.createElement('div');
-                    bubble.className = 'chat-message p-3 rounded-lg user-message flex flex-col items-end';
-                    if (imageUrl) {
-                        const img = document.createElement('img');
-                        img.src = imageUrl;
-                        img.className = 'rounded-md max-w-xs mb-2';
-                        bubble.appendChild(img);
-                    }
-                    if (message) {
-                        const messageSpan = document.createElement('span');
-                        messageSpan.textContent = message;
-                        bubble.appendChild(messageSpan);
-                    }
-                    bubbleWrapper.appendChild(bubble);
-                    return bubbleWrapper;
-                };
-                
-                const showTypingIndicator = () => {
-                    const indicator = document.createElement('div');
-                    indicator.id = 'typing-indicator';
-                    indicator.className = 'flex typing-indicator p-3';
-                    indicator.innerHTML = '<span></span><span></span><span></span>';
-                    chatbox.appendChild(indicator);
-                    chatbox.scrollTop = chatbox.scrollHeight;
-                };
+        <!-- Smart AI Chatbot Page -->
+        <section id="smart-ai" class="page-content">
+            <div class="w-full max-w-5xl mx-auto flex flex-col h-full bg-white rounded-lg shadow-2xl">
+                <!-- Chat Header -->
+                <div class="p-4 border-b">
+                    <h1 class="text-2xl text-blue-700 text-center">Smart AI Chatbot</h1>
+                    <p class="text-sm text-gray-500 text-center">សន្ទនាជាមួយជំនួយការ AI ដ៏ឆ្លាតវៃ។ សួរសំណួរ, បង្កើតរូបភាព, ឬបង្កើតកូដ!</p>
+                </div>
+                <!-- Chatbox -->
+                <div id="smart-ai-chatbox" class="flex-1 p-6 space-y-4 overflow-y-auto no-scrollbar">
+                    <div class="flex">
+                        <div class="chat-message ai-message p-3 rounded-lg">
+                            <span>សួស្តី! តើខ្ញុំអាចជួយអ្វីបានខ្លះថ្ងៃនេះ?</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Input area -->
+                <div class="p-4 bg-gray-50 border-t rounded-b-lg">
+                    <div id="image-preview-container" class="relative mb-2"></div>
+                    <div class="flex items-center space-x-3 bg-white border border-gray-300 rounded-full p-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-500">
+                        <label for="smart-ai-image-upload" class="cursor-pointer text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </label>
+                        <input type="file" id="smart-ai-image-upload" class="hidden" accept="image/*">
+                        <input type="text" id="smart-ai-input" class="flex-1 w-full bg-transparent border-none focus:ring-0 text-lg" placeholder="វាយសាររបស់អ្នកនៅទីនេះ...">
+                        <button id="smart-ai-send-btn" class="btn-action bg-blue-600 text-white rounded-full p-3 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Code Editor Page -->
+        <section id="code-editor" class="page-content">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">កម្មវិធីសរសេរកូដ</h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">សរសេរកូដ HTML, CSS, និង JavaScript ហើយមើលលទ្ធផលផ្ទាល់។</p>
+            </div>
+            <div class="bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
+                <div class="flex bg-gray-800 items-center">
+                    <button class="editor-tab-btn active" onclick="showEditorTab('html')">HTML</button>
+                    <button class="editor-tab-btn" onclick="showEditorTab('css')">CSS</button>
+                    <button class="editor-tab-btn" onclick="showEditorTab('js')">JavaScript</button>
+                    <button class="editor-tab-btn" onclick="showEditorTab('output')">Output</button>
+                    <button id="run-code-btn" class="ml-auto mr-4 my-2 btn-action bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>ដំណើរការ</span>
+                    </button>
+                </div>
+                <div class="relative" style="height: 70vh;">
+                    <textarea id="html-code" class="editor-tab-panel code-textarea active w-full h-full border-0 font-mono text-sm p-4 resize-none" placeholder="<!-- Your HTML here -->"><h1>Hello World!</h1></textarea>
+                    <textarea id="css-code" class="editor-tab-panel code-textarea w-full h-full border-0 font-mono text-sm p-4 resize-none" placeholder="/* Your CSS here */">h1 { 
+    color: #3b82f6; 
+    font-family: sans-serif;
+    text-align: center;
+    padding-top: 40px;
+}</textarea>
+                    <textarea id="js-code" class="editor-tab-panel code-textarea w-full h-full border-0 font-mono text-sm p-4 resize-none" placeholder="// Your JavaScript here"></textarea>
+                    <div id="output-panel" class="editor-tab-panel w-full h-full">
+                         <iframe id="code-editor-preview" class="w-full h-full border-0 bg-white"></iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-                const hideTypingIndicator = () => {
-                    const indicator = document.getElementById('typing-indicator');
-                    if (indicator) indicator.remove();
-                };
 
-                const generateImage = async (prompt) => {
-                    showTypingIndicator();
-                    try {
-                        const payload = { instances: [{ prompt }], parameters: { "sampleCount": 1 } };
-                        const response = await fetch(IMAGE_API_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error?.message || 'Error generating image.');
-                        }
-                        const result = await response.json();
-                        const base64Data = result.predictions?.[0]?.bytesBase64Encoded;
-                        if (base64Data) {
-                            const imageUrl = `data:image/png;base64,${base64Data}`;
-                            chatbox.appendChild(createImageBubble(imageUrl));
-                        } else {
-                            throw new Error("No image data received from API.");
-                        }
-                    } catch (error) {
-                        console.error("Image Generation Error:", error);
-                        chatbox.appendChild(createChatBubble(`សូមអភ័យទោស, មានបញ្ហាក្នុងការបង្កើតរូបភាព: ${error.message}`, 'ai'));
-                    } finally {
-                        hideTypingIndicator();
-                        chatbox.scrollTop = chatbox.scrollHeight;
-                    }
-                };
-                
-                const generateText = async (parts) => {
-                    conversationHistory.push({ role: "user", parts: parts });
-                    showTypingIndicator();
-                    try {
-                        const systemInstruction = { 
-                            parts: [{ 
-                                text: "You are 'AI Tools ខ្មែរ', a helpful AI assistant. Your capabilities include answering questions, generating images, and writing code. When asked to generate code, always provide a complete, runnable HTML file within a single markdown block like ```html\n...\n```. You MUST include all necessary HTML, CSS (using <style> tags or Tailwind CSS classes), and JavaScript (using <script> tags) in that single block. Assume Tailwind CSS is available. Make the designs modern and responsive." 
-                            }] 
-                        };
-                        const payload = { contents: conversationHistory, systemInstruction };
-                        const response = await fetch(CONVERSATION_API_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error?.message || 'An unknown error occurred.');
-                        }
-                        const result = await response.json();
-                        const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (aiResponse) {
-                            chatbox.appendChild(createChatBubble(aiResponse, 'ai'));
-                            conversationHistory.push({ role: "model", parts: [{ text: aiResponse }] });
-                        } else {
-                            chatbox.appendChild(createChatBubble("សូមអភ័យទោស, ខ្ញុំមិនទទួលបានការឆ្លើយតបទេ។", 'ai'));
-                        }
-                    } catch (error) {
-                        console.error("Chatbot API Error:", error);
-                        chatbox.appendChild(createChatBubble(`សូមអភ័យទោស, មានបញ្ហា: ${error.message}`, 'ai'));
-                    } finally {
-                        hideTypingIndicator();
-                        chatbox.scrollTop = chatbox.scrollHeight;
-                    }
-                }
-                
-                const sendMessage = async () => {
-                    const message = userInput.value.trim();
-                    if (!message && !uploadedImageData) return;
-                    const imageUrlForBubble = uploadedImageData ? `data:${uploadedImageType};base64,${uploadedImageData}` : null;
-                    chatbox.appendChild(createUserMessageBubble(message, imageUrlForBubble));
-                    userInput.value = '';
-                    const imageGenKeywords = ['generate image', 'create a picture', 'draw a picture', 'គូររូប', 'បង្កើតរូបភាព'];
-                    const isImageGenRequest = imageGenKeywords.some(keyword => message.toLowerCase().includes(keyword));
-                    if (isImageGenRequest && !uploadedImageData) {
-                        generateImage(message);
-                    } else {
-                        const parts = [];
-                        if (message) parts.push({ text: message });
-                        if (uploadedImageData) {
-                            parts.push({ inlineData: { mimeType: uploadedImageType, data: uploadedImageData } });
-                        }
-                        generateText(parts);
-                    }
-                    window.removeImagePreview();
-                    chatbox.scrollTop = chatbox.scrollHeight;
-                };
+        <!-- Features Page -->
+        <section id="features" class="page-content">
+             <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">អត្ថប្រយោជន៍នៃឧបករណ៍ AI</h1>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">AI មិនត្រឹមតែសម្រាប់អ្នកបច្ចេកទេសទេ តែវាអាចជួយមនុស្សគ្រប់គ្នាក្នុងជីវិតប្រចាំថ្ងៃ និងអាជីវកម្ម។</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-lg shadow-lg border-l-4 border-blue-500">
+                    <h2 class="text-3xl font-bold text-blue-600 mb-6">ក្នុងជីវិតប្រចាំថ្ងៃ</h2>
+                    <ul class="space-y-5 text-gray-700">
+                        <li class="flex items-start">
+                            <div class="flex-shrink-0 h-6 w-6 text-blue-500 mt-1 mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v11.494m-9-5.747h18" /></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">ជួយការសិក្សា</h4>
+                                <p class="text-gray-600">ស្វែងរកចម្លើយ ធ្វើលំហាត់ និងរៀនភាសាបរទេសបានកាន់តែងាយស្រួល។</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                           <div class="flex-shrink-0 h-6 w-6 text-blue-500 mt-1 mr-3">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m12 0a2 2 0 100-4m0 4a2 2 0 110-4M6 20v-2a2 2 0 114 0v2H6z" /></svg>
+                           </div>
+                           <div>
+                                <h4 class="font-semibold text-lg">រៀបចំគម្រោង</h4>
+                                <p class="text-gray-600">ជួយរៀបចំកាលវិភាគធ្វើដំណើរ សរសេរអ៊ីមែល ឬបង្កើតគំនិតសម្រាប់កិច្ចការផ្សេងៗ។</p>
+                           </div>
+                        </li>
+                         <li class="flex items-start">
+                           <div class="flex-shrink-0 h-6 w-6 text-blue-500 mt-1 mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L15 9l-2.053 2.053a1 1 0 000 1.414L15 15l-6 3z" /></svg>
+                           </div>
+                           <div>
+                                <h4 class="font-semibold text-lg">ការកម្សាន្ត</h4>
+                                <p class="text-gray-600">បង្កើតរឿងខ្លីៗ កំណាព្យ ឬរូបភាពសម្រាប់ចែករំលែកជាមួយមិត្តភក្តិ។</p>
+                           </div>
+                        </li>
+                    </ul>
+                </div>
+                 <div class="bg-white p-8 rounded-lg shadow-lg border-l-4 border-green-500">
+                    <h2 class="text-3xl font-bold text-green-600 mb-6">ក្នុងអាជីវកម្ម</h2>
+                    <ul class="space-y-5 text-gray-700">
+                        <li class="flex items-start">
+                             <div class="flex-shrink-0 h-6 w-6 text-green-500 mt-1 mr-3">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5V4H4zm0 12h5v-5H4v5zm12 0h5v-5h-5v5zM16 4v5h5V4h-5z" /></svg>
+                             </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">បង្កើនប្រសិទ្ធភាព</h4>
+                                <p class="text-gray-600">ធ្វើការងារដដែលៗដោយស្វ័យប្រវត្តិ ជួយឱ្យបុគ្គលិកមានពេលផ្ដោតលើការងារសំខាន់ជាង។</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                             <div class="flex-shrink-0 h-6 w-6 text-green-500 mt-1 mr-3">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>
+                             </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">សេវាកម្មអតិថិជន</h4>
+                                <p class="text-gray-600">ប្រើ Chatbot ដើម្បីឆ្លើយតបអតិថិជនបាន ២៤ ម៉ោងក្នុងមួយថ្ងៃ។</p>
+                            </div>
+                        </li>
+                         <li class="flex items-start">
+                             <div class="flex-shrink-0 h-6 w-6 text-green-500 mt-1 mr-3">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V4a2 2 0 012-2h8a2 2 0 012 2v4z" /></svg>
+                             </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">យុទ្ធសាស្ត្រទីផ្សារ</h4>
+                                <p class="text-gray-600">ជួយវិភាគទិន្នន័យ និងបង្កើតមាតិកាផ្សព្វផ្សាយដែលទាក់ទាញ។</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
 
-                if(sendBtn) sendBtn.addEventListener('click', sendMessage);
-                if(userInput) userInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                    }
-                });
-            }
+        <!-- Contact Page -->
+        <section id="contact" class="page-content">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">ទំនាក់ទំនងពួកយើង</h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">ប្រសិនបើអ្នកមានសំណួរ ឬត្រូវការព័ត៌មានបន្ថែម សូមទាក់ទងមកពួកយើងតាមរយៈព័ត៌មានខាងក្រោម។</p>
+            </div>
+            <div class="max-w-lg mx-auto bg-white p-8 rounded-lg shadow-lg">
+                <div class="space-y-6">
+                    <div class="flex items-center">
+                        <svg class="w-8 h-8 text-blue-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <div>
+                            <h3 class="text-xl font-semibold">អ៊ីមែល</h3>
+                            <a href="mailto:therealheang@gmail.com" class="text-blue-500 hover:underline">therealheang@gmail.com</a>
+                        </div>
+                    </div>
+                     <div class="flex items-center">
+                        <svg class="w-8 h-8 text-blue-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                        <div>
+                            <h3 class="text-xl font-semibold">ទូរស័ព្ទ</h3>
+                            <p class="text-gray-700">(+855) 97 542 4470</p>
+                        </div>
+                    </div>
+                     <div class="flex items-center">
+                        <svg class="w-8 h-8 text-blue-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <div>
+                            <h3 class="text-xl font-semibold">អាសយដ្ឋាន</h3>
+                            <p class="text-gray-700">ក្រុងសៀមរាប, ខេត្តសៀមរាប, កម្ពុជា</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-blue-600 mr-4">
+                            <path d="M9.78 18.24c-1.12 0-2.13-.2-2.83-.58-.7-.37-1.05-.88-1.05-1.52 0-.6.3-1.14.9-1.62l6.12-3.66c.2-.12.35-.18.47-.18s.22.06.27.18c.05.12.05.27-.05.45l-4.97 4.65c-.2.18-.3.4-.3.64s.1.43.3.6c.2.18.42.27.67.27h.45c.22 0 .42-.08.6-.24l1.1-1.05 1.55 1.15c.5.37 1.02.72 1.55 1.05.53.33 1.02.6 1.48.8.46.2.85.3 1.17.3.35 0 .64-.1.88-.3s.36-.45.36-.75v-1.1c0-.45-.08-.85-.25-1.2s-.35-.65-.6-1l-1.3-1.65 4.86-3.05c.8-.5 1.2-1.1 1.2-1.8 0-.4-.1-.7-.3-1-.2-.25-.5-.45-.85-.55s-.75-.1-1.2-.05L6.42 9.9c-.45.15-.8.3-1.05.45s-.45.3-.6.45c-.15.15-.25.3-.3.45s-.05.3-.05.45c0 .15.05.3.1.4l.2.35.25.35c.1.1.2.2.3.25l.4.25h.45c.22 0 .42-.08.6-.24l4.8-2.95c.2-.12.3-.18.35-.18s.15.06.15.18c.05.12 0 .27-.1.4L9.5 13.7l-1.2 4.45c-.2.7-.45 1.25-.75 1.65s-.65.65-1.05.75c-.4.1-1.03.15-1.88.15z"/>
+                        </svg>
+                        <div>
+                            <h3 class="text-xl font-semibold">Telegram</h3>
+                            <a href="https://t.me/CodeCraft_Studio_CCS" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">CodeCraft Studio CCS</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            // --- Code Editor Logic ---
-            const codeEditorPage = document.getElementById('code-editor');
-            if (codeEditorPage) {
-                const runCodeBtn = document.getElementById('run-code-btn');
-                const htmlCode = document.getElementById('html-code');
-                const cssCode = document.getElementById('css-code');
-                const jsCode = document.getElementById('js-code');
-                const previewPane = document.getElementById('code-editor-preview');
+    </main>
+    
+    <div id="code-preview-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[100]">
+        <div class="bg-white rounded-lg shadow-lg w-11/12 h-5/6 flex flex-col max-w-4xl">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+                <h3 class="text-xl font-bold text-gray-800">Code Preview</h3>
+                <button id="close-preview-btn" class="text-gray-500 hover:text-gray-900 text-3xl font-bold">&times;</button>
+            </div>
+            <iframe id="preview-iframe" class="w-full h-full border-0 rounded-b-lg"></iframe>
+        </div>
+    </div>
 
-                window.showEditorTab = (tabName) => {
-                    document.querySelectorAll('.editor-tab-panel').forEach(panel => panel.classList.remove('active'));
-                    document.querySelectorAll('.editor-tab-btn').forEach(btn => btn.classList.remove('active'));
-                    let panelToShow = (tabName === 'output') ? document.getElementById('output-panel') : document.getElementById(`${tabName}-code`);
-                    if(panelToShow) panelToShow.classList.add('active');
-                    const buttonToActivate = document.querySelector(`.editor-tab-btn[onclick="showEditorTab('${tabName}')"]`);
-                    if(buttonToActivate) buttonToActivate.classList.add('active');
-                }
+    <footer class="bg-white border-t mt-12">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-600">
+            <p>&copy; <span id="current-year">2025</span> AI Tools ខ្មែរ. រក្សាសិទ្ធិគ្រប់យ៉ាង។</p>
+        </div>
+    </footer>
 
-                const runCode = () => {
-                    const html = htmlCode.value;
-                    const css = cssCode.value;
-                    const js = jsCode.value;
-                    const combinedCode = `<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"><\/script><style>${css}</style></head><body class="bg-gray-100">${html}<script>${js}<\/script></body></html>`;
-                    previewPane.srcdoc = combinedCode;
-                };
+    <script src="../js/script.js">
+       
+    </script>
+</body>
+</html>
 
-                runCodeBtn.addEventListener('click', () => {
-                    runCode();
-                    showEditorTab('output');
-                });
-                runCode();
-                showEditorTab('html');
-            }
-
-            // --- Original Tools Logic ---
-            function downloadTextFile(filename, text) {
-                const element = document.createElement('a');
-                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-                element.setAttribute('download', filename);
-                element.style.display = 'none';
-                document.body.appendChild(element);
-                element.click();
-                document.body.removeChild(element);
-            }
-
-            function copyToClipboard(text, statusElement, successMessage) {
-                if (!navigator.clipboard) {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = text;
-                    textArea.style.position="fixed";
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        if (statusElement) {
-                            statusElement.textContent = successMessage;
-                            setTimeout(() => { statusElement.textContent = ''; }, 2000);
-                        }
-                    } catch (err) { console.error('Fallback copy failed', err); }
-                    document.body.removeChild(textArea);
-                    return;
-                }
-                navigator.clipboard.writeText(text).then(() => {
-                    if (statusElement) {
-                        statusElement.textContent = successMessage;
-                        setTimeout(() => { statusElement.textContent = ''; }, 2000);
-                    }
-                }).catch(err => console.error('Clipboard copy failed', err));
-            }
-            
-            const ocrButton = document.getElementById('ocr-button');
-            if (ocrButton) {
-                const ocrUpload = document.getElementById('ocr-upload');
-                const ocrResult = document.getElementById('ocr-result');
-                const ocrStatus = document.getElementById('ocr-status');
-                const ocrSpinner = document.getElementById('ocr-spinner');
-                const ocrBtnText = document.getElementById('ocr-btn-text');
-                const ocrDownloadBtn = document.getElementById('ocr-download-btn');
-                ocrButton.addEventListener('click', async () => {
-                    const file = ocrUpload.files[0];
-                    if (!file) { ocrStatus.textContent = 'សូមជ្រើសរើសរូបភាពជាមុនសិន។'; return; }
-                    ocrStatus.textContent = 'កំពុងដំណើរការ...';
-                    ocrResult.value = '';
-                    ocrButton.disabled = true;
-                    ocrDownloadBtn.disabled = true;
-                    ocrSpinner.classList.remove('hidden');
-                    ocrBtnText.textContent = 'កំពុងបម្លែង';
-                    try {
-                        const { data: { text } } = await Tesseract.recognize(file, 'eng+khm', { logger: m => { ocrStatus.textContent = `${m.status} (${(m.progress * 100).toFixed(0)}%)`; }});
-                        ocrResult.value = text;
-                        ocrStatus.textContent = 'ការបំប្លែងបានជោគជ័យ!';
-                        if(text) ocrDownloadBtn.disabled = false;
-                    } catch (error) {
-                        ocrStatus.textContent = 'មានបញ្ហាក្នុងការបំប្លែងរូបភាព។';
-                        console.error("OCR Error:", error);
-                    } finally {
-                        ocrButton.disabled = false;
-                        ocrSpinner.classList.add('hidden');
-                        ocrBtnText.textContent = 'បំប្លែង';
-                    }
-                });
-                ocrDownloadBtn.addEventListener('click', () => downloadTextFile('image-to-text-result.txt', ocrResult.value));
-            }
-            
-            const ttsButton = document.getElementById('tts-button');
-            if(ttsButton) {
-                const ttsInput = document.getElementById('tts-input');
-                const getSpeechVoices = () => new Promise(resolve => {
-                    let voices = window.speechSynthesis.getVoices();
-                    if (voices.length) return resolve(voices);
-                    window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
-                });
-                ttsButton.addEventListener('click', async () => {
-                    const text = ttsInput.value.trim();
-                    if (!text) return;
-                    if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-                    const voices = await getSpeechVoices();
-                    const khmerVoice = voices.find(voice => voice.lang.toLowerCase() === 'km-kh');
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = 'km-KH';
-                    if (khmerVoice) utterance.voice = khmerVoice;
-                    window.speechSynthesis.speak(utterance);
-                });
-            }
-
-            const startRecordBtn = document.getElementById('start-record-btn');
-            if (startRecordBtn) {
-                const stopRecordBtn = document.getElementById('stop-record-btn');
-                const playBtn = document.getElementById('play-btn');
-                const pitchSlider = document.getElementById('pitch-slider');
-                const pitchValue = document.getElementById('pitch-value');
-                const voiceChangerStatus = document.getElementById('voice-changer-status');
-                const audioPlayback = document.getElementById('audio-playback');
-                const voiceUpload = document.getElementById('voice-upload');
-                const voiceDownloadBtn = document.getElementById('voice-download-btn');
-                let mediaRecorder, audioChunks = [], audioUrl;
-
-                function setAudioReady(url) {
-                    if (audioUrl) URL.revokeObjectURL(audioUrl);
-                    audioUrl = url;
-                    audioPlayback.src = url;
-                    playBtn.disabled = false;
-                    voiceDownloadBtn.disabled = false;
-                }
-                voiceUpload.addEventListener('change', (event) => {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    setAudioReady(URL.createObjectURL(file));
-                    startRecordBtn.disabled = true;
-                    stopRecordBtn.disabled = true;
-                    voiceChangerStatus.textContent = "ឯកសារបានផ្ទុក! ចុច Play។";
-                });
-                startRecordBtn.addEventListener('click', async () => {
-                    voiceUpload.value = '';
-                    if (audioUrl) URL.revokeObjectURL(audioUrl);
-                    try {
-                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        const supportedMimeType = ['audio/webm', 'audio/mp4'].find(t => MediaRecorder.isTypeSupported(t));
-                        if (!supportedMimeType) { voiceChangerStatus.textContent = "Browser មិនគាំទ្រការថតសំឡេងទេ។"; return; }
-                        mediaRecorder = new MediaRecorder(stream, { mimeType: supportedMimeType });
-                        mediaRecorder.start();
-                        audioChunks = [];
-                        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                        mediaRecorder.onstop = () => {
-                            const audioBlob = new Blob(audioChunks, { type: supportedMimeType });
-                            setAudioReady(URL.createObjectURL(audioBlob));
-                            voiceChangerStatus.textContent = "ថតបានสำเร็จ!";
-                        };
-                        startRecordBtn.disabled = true;
-                        stopRecordBtn.disabled = false;
-                        playBtn.disabled = true;
-                        voiceDownloadBtn.disabled = true;
-                        voiceChangerStatus.textContent = "កំពុងថត... 🎤";
-                    } catch (err) {
-                        voiceChangerStatus.textContent = "មិនអាចចូលប្រើមីក្រូហ្វូនបានទេ។";
-                        console.error("Microphone Error:", err);
-                    }
-                });
-                stopRecordBtn.addEventListener('click', () => {
-                    if (mediaRecorder?.state !== 'inactive') mediaRecorder.stop();
-                    startRecordBtn.disabled = false;
-                    stopRecordBtn.disabled = true;
-                });
-                pitchSlider.addEventListener('input', () => pitchValue.textContent = pitchSlider.value);
-                playBtn.addEventListener('click', () => { if (audioPlayback.src) { audioPlayback.playbackRate = pitchSlider.value; audioPlayback.play(); } });
-                voiceDownloadBtn.addEventListener('click', () => {
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = audioUrl;
-                    a.download = 'voice-changer-audio.webm';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                });
-            }
-
-            const qrButton = document.getElementById('qr-button');
-            if (qrButton) {
-                const qrInput = document.getElementById('qr-input');
-                const qrcodeDiv = document.getElementById('qrcode');
-                const qrDownloadBtn = document.getElementById('qr-download-btn');
-                const generateQR = () => {
-                    const text = qrInput.value.trim();
-                    qrcodeDiv.innerHTML = ''; 
-                    qrDownloadBtn.disabled = true;
-                    if (!text) return;
-                    new QRCode(qrcodeDiv, { text, width: 180, height: 180 });
-                    qrDownloadBtn.disabled = false;
-                }
-                qrButton.addEventListener('click', generateQR);
-                qrDownloadBtn.addEventListener('click', () => {
-                    const img = qrcodeDiv.querySelector('img');
-                    if (!img) return;
-                    const a = document.createElement('a');
-                    a.href = img.src;
-                    a.download = 'qrcode.png';
-                    a.click();
-                });
-                generateQR();
-            }
-
-            const qrReaderUpload = document.getElementById('qr-reader-upload');
-            if (qrReaderUpload) {
-                const qrReaderResult = document.getElementById('qr-reader-result');
-                const qrReaderStatus = document.getElementById('qr-reader-status');
-                const qrCopyBtn = document.getElementById('qr-copy-btn');
-                const qrCanvas = document.createElement('canvas');
-                const qrCanvasCtx = qrCanvas.getContext('2d');
-                qrReaderUpload.addEventListener('change', (event) => {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    qrReaderStatus.textContent = 'កំពុងអានរូបភាព...';
-                    qrReaderResult.value = '';
-                    qrCopyBtn.disabled = true;
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        const img = new Image();
-                        img.onload = () => {
-                            qrCanvas.width = img.width;
-                            qrCanvas.height = img.height;
-                            qrCanvasCtx.drawImage(img, 0, 0, img.width, img.height);
-                            const imageData = qrCanvasCtx.getImageData(0, 0, img.width, img.height);
-                            qrReaderStatus.textContent = 'កំពុងវិភាគ...';
-                            const code = jsQR(imageData.data, imageData.width, imageData.height);
-                            if (code) {
-                                qrReaderResult.value = code.data;
-                                qrReaderStatus.textContent = 'រកឃើញដោយជោគជ័យ!';
-                                qrCopyBtn.disabled = false;
-                            } else {
-                                qrReaderStatus.textContent = 'រកមិនឃើញកូដ QR ទេ។';
-                            }
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                });
-                qrCopyBtn.addEventListener('click', () => { copyToClipboard(qrReaderResult.value, qrReaderStatus, 'បានចម្លងទៅ Clipboard!'); });
-            }
-            
-            const colorPicker = document.getElementById('color-picker');
-            if (colorPicker) {
-                const colorDisplay = document.getElementById('color-display');
-                const colorHexSpan = document.getElementById('color-hex');
-                const colorRgbSpan = document.getElementById('color-rgb');
-                const colorHslSpan = document.getElementById('color-hsl');
-                const copyHexBtn = document.getElementById('copy-hex');
-                const copyRgbBtn = document.getElementById('copy-rgb');
-                const copyHslBtn = document.getElementById('copy-hsl');
-                const colorCopyStatus = document.getElementById('color-copy-status');
-                const hexToRgb = (hex) => {
-                    let r = 0, g = 0, b = 0;
-                    if (hex.length == 4) { r = "0x" + hex[1] + hex[1]; g = "0x" + hex[2] + hex[2]; b = "0x" + hex[3] + hex[3]; }
-                    else if (hex.length == 7) { r = "0x" + hex[1] + hex[2]; g = "0x" + hex[3] + hex[4]; b = "0x" + hex[5] + hex[6]; }
-                    return `rgb(${+r}, ${+g}, ${+b})`;
-                }
-                const hexToHsl = (H) => {
-                    let r = 0, g = 0, b = 0;
-                    if (H.length == 4) { r = "0x" + H[1] + H[1]; g = "0x" + H[2] + H[2]; b = "0x" + H[3] + H[3]; }
-                    else if (H.length == 7) { r = "0x" + H[1] + H[2]; g = "0x" + H[3] + H[4]; b = "0x" + H[5] + H[6]; }
-                    r /= 255; g /= 255; b /= 255;
-                    let cmin = Math.min(r,g,b), cmax = Math.max(r,g,b), delta = cmax - cmin, h = 0, s = 0, l = 0;
-                    if (delta == 0) h = 0; else if (cmax == r) h = ((g - b) / delta) % 6; else if (cmax == g) h = (b - r) / delta + 2; else h = (r - g) / delta + 4;
-                    h = Math.round(h * 60);
-                    if (h < 0) h += 360;
-                    l = (cmax + cmin) / 2;
-                    s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
-                    s = +(s * 100).toFixed(1);
-                    l = +(l * 100).toFixed(1);
-                    return `hsl(${h}, ${s}%, ${l}%)`;
-                }
-                const updateColorValues = (hex) => {
-                    const rgb = hexToRgb(hex);
-                    const hsl = hexToHsl(hex);
-                    colorDisplay.style.backgroundColor = hex;
-                    colorHexSpan.textContent = hex;
-                    colorRgbSpan.textContent = rgb;
-                    colorHslSpan.textContent = hsl;
-                }
-                colorPicker.addEventListener('input', (e) => updateColorValues(e.target.value));
-                copyHexBtn.addEventListener('click', () => copyToClipboard(colorHexSpan.textContent, colorCopyStatus, `បានចម្លង ${colorHexSpan.textContent}!`));
-                copyRgbBtn.addEventListener('click', () => copyToClipboard(colorRgbSpan.textContent, colorCopyStatus, `បានចម្លង ${colorRgbSpan.textContent}!`));
-                copyHslBtn.addEventListener('click', () => copyToClipboard(colorHslSpan.textContent, colorCopyStatus, `បានចម្លង ${colorHslSpan.textContent}!`));
-                updateColorValues('#2563eb');
-            }
-
-            const pdfButton = document.getElementById('pdf-button');
-            if (pdfButton) {
-                const pdfUpload = document.getElementById('pdf-upload');
-                const pdfResult = document.getElementById('pdf-result');
-                const pdfStatus = document.getElementById('pdf-status');
-                const pdfSpinner = document.getElementById('pdf-spinner');
-                const pdfBtnText = document.getElementById('pdf-btn-text');
-                const pdfDownloadBtn = document.getElementById('pdf-download-btn');
-                pdfButton.addEventListener('click', () => {
-                    const file = pdfUpload.files[0];
-                    if (!file) { pdfStatus.textContent = 'សូមជ្រើសរើសឯកសារ PDF ជាមុនសិន។'; return; }
-                    pdfStatus.textContent = 'កំពុងរៀបចំ...';
-                    pdfResult.value = '';
-                    pdfButton.disabled = true;
-                    pdfDownloadBtn.disabled = true;
-                    pdfSpinner.classList.remove('hidden');
-                    pdfBtnText.textContent = 'កំពុងបម្លែង';
-                    const fileReader = new FileReader();
-                    fileReader.onload = async function() {
-                        pdfStatus.textContent = 'កំពុងអានឯកសារ...';
-                        try {
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.102/pdf.worker.min.js`;
-                            const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
-                            let fullText = '';
-                            for (let i = 1; i <= pdf.numPages; i++) {
-                                const page = await pdf.getPage(i);
-                                const textContent = await page.getTextContent();
-                                fullText += textContent.items.map(s => s.str).join(' ') + '\n';
-                                pdfStatus.textContent = `កំពុងដកស្រង់ទំព័រ ${i}/${pdf.numPages}...`;
-                            }
-                            pdfResult.value = fullText;
-                            pdfStatus.textContent = 'ការបំប្លែងបានជោគជ័យ!';
-                            if(fullText) pdfDownloadBtn.disabled = false;
-                        } catch (error) {
-                            pdfStatus.textContent = 'មានបញ្ហាក្នុងការបំប្លែង PDF។';
-                            console.error("PDF to Text Error:", error);
-                        } finally {
-                            pdfButton.disabled = false;
-                            pdfSpinner.classList.add('hidden');
-                            pdfBtnText.textContent = 'បំប្លែង';
-                        }
-                    };
-                    fileReader.readAsArrayBuffer(file);
-                });
-                pdfDownloadBtn.addEventListener('click', () => downloadTextFile('pdf-to-text-result.txt', pdfResult.value));
-            }
-            
-            const textToPdfButton = document.getElementById('text-to-pdf-button');
-            if (textToPdfButton) {
-                const textToPdfInput = document.getElementById('text-to-pdf-input');
-                textToPdfButton.addEventListener('click', () => {
-                    const text = textToPdfInput.value.trim();
-                    if (!text) return;
-                    try {
-                        const { jsPDF } = window.jspdf;
-                        const doc = new jsPDF();
-                        const splitText = doc.splitTextToSize(text, 180);
-                        doc.text(splitText, 15, 20);
-                        doc.save('document.pdf');
-                    } catch(e) { 
-                        console.error("Error generating PDF:", e); 
-                    }
-                });
-            }
-        });
