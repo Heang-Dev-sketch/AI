@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI tool</title>
+    <title> AI (AI Tools)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -86,12 +86,12 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <nav class="flex items-center justify-between h-16">
                 <div class="flex-shrink-0">
-                    <a href="#" class="text-2xl font-bold text-blue-600">AI tool</a>
+                    <a href="#" class="text-2xl font-bold text-blue-600">AI Tools ខ្មែរ</a>
                 </div>
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4">
                         <a onclick="showPage('home')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium active">ទំព័រដើម</a>
-                        <a onclick="showPage('categories')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">ឧបករណ៍</a>
+                        <a onclick="showPage('categories')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">ប្រភេទ</a>
                         <a onclick="showPage('features')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">អត្ថប្រយោជន៍</a>
                         <a onclick="showPage('contact')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white px-3 py-2 rounded-md text-sm font-medium">ទំនាក់ទំនង</a>
                     </div>
@@ -110,7 +110,7 @@
         <div id="mobile-menu" class="md:hidden hidden">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 <a onclick="showPage('home')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium active">ទំព័រដើម</a>
-                <a onclick="showPage('categories')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">ឧបករណ៍</a>
+                <a onclick="showPage('categories')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">ប្រភេទ</a>
                 <a onclick="showPage('features')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">អត្ថប្រយោជន៍</a>
                 <a onclick="showPage('contact')" class="nav-link text-gray-700 hover:bg-blue-500 hover:text-white block px-3 py-2 rounded-md text-base font-medium">ទំនាក់ទំនង</a>
             </div>
@@ -123,27 +123,69 @@
         <!-- Home Page -->
         <section id="home" class="page-content active">
             <div class="text-center bg-white p-8 md:p-12 rounded-lg shadow-lg">
-                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">សូមស្វាគមន៍មកកាន់ AI Tool</h1>
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">សូមស្វាគមន៍មកកាន់ពិភពនៃ AI</h1>
                 <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-                    គឺជាបណ្តុំឧបករណ៍ឌីជីថលដ៏មានអានុភាព ដែលជួយសម្រួលកិច្ចការប្រចាំថ្ងៃរបស់អ្នក ចាប់ពីការគ្រប់គ្រងឯកសារ រហូតដល់ការច្នៃប្រឌិតផ្សេងៗ។
+                    ឧបករណ៍បញ្ញាសិប្បនិម្មិត (AI) គឺជាកម្មវិធីកុំព្យូទ័រទំនើបដែលអាចជួយយើងក្នុងកិច្ចការជាច្រើនប្រចាំថ្ងៃ។ វាមិនមែនជារឿងស្មុគស្មាញទៀតទេ តែជាជំនួយការដ៏ឆ្លាតវៃសម្រាប់មនុស្សគ្រប់គ្នា។
                 </p>
-                <button onclick="showPage('categories')" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-700 transition duration-300 text-lg">ចាប់ផ្តើមប្រើប្រាស់</button>
+                <button onclick="showPage('categories')" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-700 transition duration-300 text-lg">ស្វែងយល់បន្ថែម</button>
             </div>
-             <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            <!-- About Section -->
+            <div class="mt-16 bg-white p-8 md:p-12 rounded-lg shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h2 class="text-3xl md:text-4xl text-blue-700 mb-4">អំពីគម្រោងនេះ</h2>
+                        <p class="text-gray-600 mb-6 leading-relaxed">
+                            AI Tools ខ្មែរ គឺជាគម្រោងមួយដែលបង្កើតឡើងក្នុងគោលបំណងផ្ដល់នូវឧបករណ៍ AI ដែលមានប្រយោជន៍ និងងាយស្រួលប្រើប្រាស់សម្រាប់អ្នកប្រើប្រាស់ជាភាសាខ្មែរ។ គ្រប់ឧបករណ៍ទាំងអស់ដំណើរការដោយផ្ទាល់នៅក្នុងកម្មវិធីរុករករបស់អ្នក ដោយមិនចាំបាច់ដំឡើងកម្មវិធីបន្ថែម ឬភ្ជាប់ទៅសេវាកម្មខាងក្រៅឡើយ។ យើងជឿជាក់ថាបច្ចេកវិទ្យាគួរតែអាចបានសម្រាប់មនុស្សគ្រប់គ្នា។
+                        </p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-8 w-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">ឥតគិតថ្លៃ និងបើកចំហ</h4>
+                                <p class="text-gray-600">ប្រើប្រាស់គ្រប់ឧបករណ៍ដោយសេរី ដោយគ្មានការចំណាយ។</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                             <div class="flex-shrink-0 h-8 w-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" /></svg>
+                             </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">ផ្តោតលើភាសាខ្មែរ</h4>
+                                <p class="text-gray-600">បង្កើតឡើងដោយយល់ពីតម្រូវការរបស់អ្នកប្រើប្រាស់ខ្មែរ។</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                             <div class="flex-shrink-0 h-8 w-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                             </div>
+                             <div>
+                                <h4 class="font-semibold text-lg">ការពារឯកជនភាព</h4>
+                                <p class="text-gray-600">ទិន្នន័យរបស់អ្នកត្រូវបានដំណើរការនៅលើឧបករណ៍របស់អ្នកតែប៉ុណ្ណោះ។</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="bg-white p-6 rounded-lg shadow-md text-center">
                     <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    <h3 class="text-2xl font-bold mb-2">ប្រសិទ្ធភាព</h3>
-                    <p class="text-gray-600">ឧបករណ៍ជាច្រើននៅកន្លែងតែមួយ សន្សំសំចៃពេលវេលារបស់អ្នក។</p>
+                    <h3 class="text-2xl font-bold mb-2">ល្បឿនលឿន</h3>
+                    <p class="text-gray-600">បំពេញការងារស្មុគស្មាញបានក្នុងរយៈពេលខ្លី។</p>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-md text-center">
                      <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                    <h3 class="text-2xl font-bold mb-2">ភាពងាយស្រួល</h3>
-                    <p class="text-gray-600">ងាយស្រួលប្រើប្រាស់ មិនថាអ្នកជាអ្នកបច្ចេកទេស ឬអ្នកប្រើប្រាស់ទូទៅ។</p>
+                    <h3 class="text-2xl font-bold mb-2">ភាពឆ្លាតវៃ</h3>
+                    <p class="text-gray-600">យល់ពីតម្រូវការ និងផ្តល់ដំណោះស្រាយដ៏ល្អបំផុត។</p>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-md text-center">
                     <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
-                    <h3 class="text-2xl font-bold mb-2">ភាពសម្បូរបែប</h3>
-                    <p class="text-gray-600">ឧបករណ៍គ្របដណ្តប់លើតម្រូវការជាច្រើន ពីការងាររហូតដល់ការកម្សាន្ត។</p>
+                    <h3 class="text-2xl font-bold mb-2">ភាពច្នៃប្រឌិត</h3>
+                    <p class="text-gray-600">បង្កើតគំនិតថ្មីៗ ទាំងការសរសេរ និងការរចនា។</p>
                 </div>
             </div>
         </section>
@@ -151,8 +193,8 @@
         <!-- Categories Page -->
         <section id="categories" class="page-content">
             <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">ឧបករណ៍ឌីជីថលសម្រាប់ប្រើប្រាស់</h1>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">សាកល្បងប្រើប្រាស់ឧបករណ៍ខាងក្រោមដោយផ្ទាល់នៅលើគេហទំព័រនេះ។</p>
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">ឧបករណ៍ AI សម្រាប់ប្រើប្រាស់</h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">សាកល្បងប្រើប្រាស់ឧបករណ៍ AI ខាងក្រោមដោយផ្ទាល់នៅលើគេហទំព័រនេះ។</p>
             </div>
              <div id="sticky-ai-menu-categories" class="sticky top-16 bg-white py-2 shadow-lg z-40 mb-12 rounded-lg">
                 <!-- Row 1 -->
@@ -252,7 +294,7 @@
                                 <p class="text-gray-600 mb-6">វាយបញ្ចូលអត្ថបទ ហើយបង្កើតជាឯកសារ PDF។</p>
                                  <div class="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
                                     <textarea id="text-to-pdf-input" rows="5" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="សរសេរអ្វីមួយនៅទីនេះ..."></textarea>
-                                    <button id="text-to-pdf-button" class="btn-action w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700">បង្កើតជា PDF</button>
+                                    <button id="text-to-pdf-button" class="btn-action w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700">បង្កើត និងទាញយក PDF</button>
                                     <p class="text-xs text-gray-500 text-center">ចំណាំ៖ អក្សរខ្មែរអាចមិនបង្ហាញត្រឹមត្រូវ។</p>
                                 </div>
                             </div>
@@ -371,8 +413,8 @@
         <!-- Features Page -->
         <section id="features" class="page-content">
              <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">អត្ថប្រយោជន៍នៃកម្មវិធីពហុឧបករណ៍</h1>
-                <p class="text-lg text-gray-600 max-w-3xl mx-auto">កម្មវិធីនេះប្រមូលផ្តុំឧបករណ៍មានប្រយោជន៍ជាច្រើននៅកន្លែងតែមួយ ដែលជួយសន្សំសំចៃពេលវេលា និងបង្កើនប្រសិទ្ធភាពការងារ។</p>
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">អត្ថប្រយោជន៍នៃឧបករណ៍ AI</h1>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">AI មិនត្រឹមតែសម្រាប់អ្នកបច្ចេកទេសទេ តែវាអាចជួយមនុស្សគ្រប់គ្នាក្នុងជីវិតប្រចាំថ្ងៃ និងអាជីវកម្ម។</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Daily Life Benefits -->
@@ -384,8 +426,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v11.494m-9-5.747h18" /></svg>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-lg">ភាពងាយស្រួល</h4>
-                                <p class="text-gray-600">គ្រប់គ្រងឯកសារ បំប្លែងទិន្នន័យ និងធ្វើកិច្ចការផ្សេងៗបានយ៉ាងងាយស្រួលពីកម្មវិធីតែមួយ។</p>
+                                <h4 class="font-semibold text-lg">ជួយការសិក្សា</h4>
+                                <p class="text-gray-600">ស្វែងរកចម្លើយ ធ្វើលំហាត់ និងរៀនភាសាបរទេសបានកាន់តែងាយស្រួល។</p>
                             </div>
                         </li>
                         <li class="flex items-start">
@@ -393,8 +435,8 @@
                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m12 0a2 2 0 100-4m0 4a2 2 0 110-4M6 20v-2a2 2 0 114 0v2H6z" /></svg>
                            </div>
                            <div>
-                                <h4 class="font-semibold text-lg">ការរៀនសូត្រ</h4>
-                                <p class="text-gray-600">ប្រើឧបករណ៍បំប្លែងអក្សរ និងសំឡេង ដើម្បីជួយក្នុងការសិក្សាភាសា ឬស្រាវជ្រាវឯកសារ។</p>
+                                <h4 class="font-semibold text-lg">រៀបចំគម្រោង</h4>
+                                <p class="text-gray-600">ជួយរៀបចំកាលវិភាគធ្វើដំណើរ សរសេរអ៊ីមែល ឬបង្កើតគំនិតសម្រាប់កិច្ចការផ្សេងៗ។</p>
                            </div>
                         </li>
                          <li class="flex items-start">
@@ -402,8 +444,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L15 9l-2.053 2.053a1 1 0 000 1.414L15 15l-6 3z" /></svg>
                            </div>
                            <div>
-                                <h4 class="font-semibold text-lg">ការច្នៃប្រឌិត</h4>
-                                <p class="text-gray-600">ប្រើឧបករណ៍រចនាដូចជា Color Picker និង QR Code Generator ដើម្បីបង្កើតគំនិតច្នៃប្រឌិតថ្មីៗ។</p>
+                                <h4 class="font-semibold text-lg">ការកម្សាន្ត</h4>
+                                <p class="text-gray-600">បង្កើតរឿងខ្លីៗ កំណាព្យ ឬរូបភាពសម្រាប់ចែករំលែកជាមួយមិត្តភក្តិ។</p>
                            </div>
                         </li>
                     </ul>
@@ -417,8 +459,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5V4H4zm0 12h5v-5H4v5zm12 0h5v-5h-5v5zM16 4v5h5V4h-5z" /></svg>
                              </div>
                             <div>
-                                <h4 class="font-semibold text-lg">ប្រសិទ្ធភាពការងារ</h4>
-                                <p class="text-gray-600">បង្កើនល្បឿនការងារដោយបំប្លែងឯកសារ PDF ឬរូបភាពទៅជាអត្ថបទបានយ៉ាងរហ័ស។</p>
+                                <h4 class="font-semibold text-lg">បង្កើនប្រសិទ្ធភាព</h4>
+                                <p class="text-gray-600">ធ្វើការងារដដែលៗដោយស្វ័យប្រវត្តិ ជួយឱ្យបុគ្គលិកមានពេលផ្ដោតលើការងារសំខាន់ជាង។</p>
                             </div>
                         </li>
                         <li class="flex items-start">
@@ -426,8 +468,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>
                              </div>
                             <div>
-                                <h4 class="font-semibold text-lg">ការគ្រប់គ្រងឯកសារ</h4>
-                                <p class="text-gray-600">ងាយស្រួលបង្កើតឯកសារ PDF ពីអត្ថបទ និងដកស្រង់ទិន្នន័យពីឯកសារដែលមានស្រាប់។</p>
+                                <h4 class="font-semibold text-lg">សេវាកម្មអតិថិជន</h4>
+                                <p class="text-gray-600">ប្រើ Chatbot ដើម្បីឆ្លើយតបអតិថិជនបាន ២៤ ម៉ោងក្នុងមួយថ្ងៃ។</p>
                             </div>
                         </li>
                          <li class="flex items-start">
@@ -435,8 +477,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V4a2 2 0 012-2h8a2 2 0 012 2v4z" /></svg>
                              </div>
                             <div>
-                                <h4 class="font-semibold text-lg">ជំនួយការទីផ្សារ</h4>
-                                <p class="text-gray-600">បង្កើត QR Code សម្រាប់យុទ្ធនាការផ្សព្វផ្សាយ និងជ្រើសរើសពណ៌ដែលទាក់ទាញសម្រាប់ម៉ាកយីហោ។</p>
+                                <h4 class="font-semibold text-lg">យុទ្ធសាស្ត្រទីផ្សារ</h4>
+                                <p class="text-gray-600">ជួយវិភាគទិន្នន័យ និងបង្កើតមាតិកាផ្សព្វផ្សាយដែលទាក់ទាញ។</p>
                             </div>
                         </li>
                     </ul>
@@ -491,7 +533,7 @@
     <!-- Footer -->
     <footer class="bg-white border-t mt-12">
         <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-600">
-            <p>&copy; 2025 AI Tool. រក្សាសិទ្ធិគ្រប់យ៉ាង។</p>
+            <p>&copy; 2025 AI Tools ខ្មែរ. រក្សាសិទ្ធិគ្រប់យ៉ាង។</p>
         </div>
     </footer>
 
@@ -895,5 +937,4 @@
 
 </body>
 </html>
-
 
