@@ -31,48 +31,38 @@
             color: #ffffff;
             background-color: #2563eb; /* blue-600 */
         }
+        
+        /* --- Page Transition Animation --- */
         .page-content {
             display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
         }
         .page-content.active {
             display: block;
+            opacity: 1;
         }
-        /* For better button feedback */
+
         .btn-action {
-            transition: background-color 0.2s ease-in-out;
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease;
+        }
+         .btn-action:hover {
+            transform: scale(1.05);
         }
         .btn-action:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            transform: scale(1);
         }
-        input[type="color"]::-webkit-color-swatch-wrapper {
-            padding: 0;
-        }
-        input[type="color"]::-webkit-color-swatch {
-            border: none;
-            border-radius: 50%;
-        }
-        @keyframes scroll {
-            from { transform: translateX(0); }
-            to { transform: translateX(-100%); }
-        }
-        @keyframes scroll-reverse {
-            from { transform: translateX(-100%); }
-            to { transform: translateX(0); }
-        }
-        .animate-scroll {
-            animation: scroll 80s linear infinite;
-        }
-        .animate-scroll-reverse {
-            animation: scroll-reverse 80s linear infinite;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+        @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+        @keyframes scroll-reverse { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        .animate-scroll { animation: scroll 80s linear infinite; }
+        .animate-scroll-reverse { animation: scroll-reverse 80s linear infinite; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         #sticky-ai-menu-categories:hover .animate-scroll,
         #sticky-ai-menu-categories:hover .animate-scroll-reverse {
             animation-play-state: paused;
@@ -84,111 +74,83 @@
             display: flex;
             flex-direction: column;
         }
-        .chat-message {
-            max-width: 90%;
-            word-wrap: break-word;
-        }
-        .chat-message span {
-             white-space: pre-wrap;
-        }
-        .user-message {
-            background-color: #2563eb; /* blue-600 */
-            color: white;
-        }
-        .user-message-wrapper {
-             justify-content: flex-end;
-        }
-        .ai-message {
-            background-color: #e5e7eb; /* gray-200 */
-            color: #1f2937; /* gray-800 */
-            align-self: flex-start;
-        }
-        .typing-indicator {
-            align-self: flex-start;
-        }
+        .chat-message { max-width: 90%; word-wrap: break-word; }
+        .chat-message span { white-space: pre-wrap; }
+        .user-message { background-color: #2563eb; color: white; }
+        .user-message-wrapper { justify-content: flex-end; }
+        .ai-message { background-color: #e5e7eb; color: #1f2937; align-self: flex-start; }
+        .typing-indicator { align-self: flex-start; }
         .typing-indicator span {
-            height: 8px;
-            width: 8px;
-            background-color: #9ca3af; /* gray-400 */
-            border-radius: 50%;
-            display: inline-block;
+            height: 8px; width: 8px; background-color: #9ca3af;
+            border-radius: 50%; display: inline-block;
             animation: bounce 1.4s infinite ease-in-out both;
         }
         .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
-        }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
 
         /* --- Code Editor Styles --- */
         .editor-tab-btn {
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            border: none;
-            background-color: #1f2937; /* gray-800 */
-            color: #d1d5db; /* gray-300 */
-            transition: all 0.2s ease-in-out;
-            border-bottom: 3px solid transparent;
+            padding: 0.75rem 1.5rem; cursor: pointer; border: none;
+            background-color: #1f2937; color: #d1d5db;
+            transition: all 0.2s ease-in-out; border-bottom: 3px solid transparent;
         }
-        .editor-tab-btn:hover {
-            background-color: #374151; /* gray-700 */
-            color: white;
-        }
-        .editor-tab-btn.active {
-            color: white;
-            background-color: #4b5563; /* gray-600 */
-            border-bottom-color: #3b82f6; /* blue-500 */
-        }
-        .editor-tab-panel {
-            display: none;
-        }
-        .editor-tab-panel.active {
-            display: block;
-        }
+        .editor-tab-btn:hover { background-color: #374151; color: white; }
+        .editor-tab-btn.active { color: white; background-color: #4b5563; border-bottom-color: #3b82f6; }
+        .editor-tab-panel { display: none; }
+        .editor-tab-panel.active { display: block; }
         .code-textarea {
-            background-color: #111827; /* gray-900 */
-            color: #f3f4f6; /* gray-100 */
-            caret-color: #3b82f6; /* blue-500 */
-            font-family: 'Courier New', Courier, monospace;
+            background-color: #111827; color: #f3f4f6;
+            caret-color: #3b82f6; font-family: 'Courier New', Courier, monospace;
         }
 
         /* Responsive Preview Styles */
         #preview-iframe-wrapper {
-            transition: width 0.3s ease-in-out;
-            margin: auto;
-            border: 4px solid #374151;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            height: 95%;
+            transition: width 0.3s ease-in-out; margin: auto;
+            border: 4px solid #374151; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); height: 95%;
         }
         .preview-desktop { width: 100%; }
         .preview-tablet { width: 768px; }
         .preview-mobile { width: 425px; }
-
-        .responsive-btn.active {
-            background-color: #3b82f6;
-            color: white;
-        }
+        .responsive-btn.active { background-color: #3b82f6; color: white; }
 
         /* Code Block in Chat */
         .chat-code-block {
-            background-color: #1f2937;
-            color: #d1d5db;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.875rem;
-            margin-top: 0.75rem;
-            display: none; /* Hidden by default */
+            background-color: #1f2937; color: #d1d5db; padding: 1rem;
+            border-radius: 0.5rem; overflow-x: auto; font-family: 'Courier New', Courier, monospace;
+            font-size: 0.875rem; margin-top: 0.75rem; display: none;
         }
-        
-        .ai-mode-btn.active {
-            background-color: #2563eb;
-            color: white;
+        .ai-mode-btn.active { background-color: #2563eb; color: white; }
+
+        /* --- New Modern & Animation Styles --- */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .scroll-animate.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+
+        .tool-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .tool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
 
+        .hero-gradient {
+            background-color: #f9fafb; /* gray-50 */
+            background-image: radial-gradient(circle at 1% 1%, #e0e7ff, transparent 35%),
+                              radial-gradient(circle at 99% 99%, #dbeafe, transparent 35%);
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -238,14 +200,14 @@
 
         <!-- Home Page -->
         <section id="home" class="page-content active">
-            <div class="text-center bg-white p-8 md:p-12 rounded-lg shadow-lg">
-                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">សូមស្វាគមន៍មកកាន់ពិភពនៃ AI</h1>
-                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+            <div class="text-center bg-white p-8 md:p-12 rounded-lg shadow-lg hero-gradient">
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4 scroll-animate">សូមស្វាគមន៍មកកាន់ពិភពនៃ AI</h1>
+                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8 scroll-animate delay-1">
                     ឧបករណ៍បញ្ញាសិប្បនិម្មិត (AI) គឺជាកម្មវិធីកុំព្យូទ័រទំនើបដែលអាចជួយយើងក្នុងកិច្ចការជាច្រើនប្រចាំថ្ងៃ។ វាមិនមែនជារឿងស្មុគស្មាញទៀតទេ តែជាជំនួយការដ៏ឆ្លាតវៃសម្រាប់មនុស្សគ្រប់គ្នា។
                 </p>
-                <button onclick="showPage('categories')" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-700 transition duration-300 text-lg">ស្វែងយល់បន្ថែម</button>
+                <button onclick="showPage('categories')" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-700 transition duration-300 text-lg btn-action scroll-animate delay-2">ស្វែងយល់បន្ថែម</button>
             </div>
-            <div class="mt-16 bg-white p-8 md:p-12 rounded-lg shadow-lg">
+            <div class="mt-16 bg-white p-8 md:p-12 rounded-lg shadow-lg scroll-animate delay-3">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                     <div>
                         <h2 class="text-3xl md:text-4xl text-blue-700 mb-4">អំពីគម្រោងនេះ</h2>
@@ -285,17 +247,17 @@
                 </div>
             </div>
              <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center tool-card scroll-animate delay-1">
                     <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     <h3 class="text-2xl font-bold mb-2">ល្បឿនលឿន</h3>
                     <p class="text-gray-600">បំពេញការងារស្មុគស្មាញបានក្នុងរយៈពេលខ្លី។</p>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center tool-card scroll-animate delay-2">
                      <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
                     <h3 class="text-2xl font-bold mb-2">ភាពឆ្លាតវៃ</h3>
                     <p class="text-gray-600">យល់ពីតម្រូវការ និងផ្តល់ដំណោះស្រាយដ៏ល្អបំផុត។</p>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center tool-card scroll-animate delay-3">
                     <svg class="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
                     <h3 class="text-2xl font-bold mb-2">ភាពច្នៃប្រឌិត</h3>
                     <p class="text-gray-600">បង្កើតគំនិតថ្មីៗ ទាំងការសរសេរ និងការរចនា។</p>
@@ -305,8 +267,8 @@
 
         <!-- Categories Page -->
         <section id="categories" class="page-content">
-            <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4"> AI Tools</h1>
+            <div class="text-center mb-12 scroll-animate">
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">AI Tool</h1>
                 <p class="text-lg text-gray-600 max-w-2xl mx-auto">សាកល្បងប្រើប្រាស់ឧបករណ៍ AI ខាងក្រោមដោយផ្ទាល់នៅលើគេហទំព័រនេះ។</p>
             </div>
              <div id="sticky-ai-menu-categories" class="sticky top-16 bg-white py-2 shadow-lg z-40 mb-12 rounded-lg">
@@ -360,10 +322,10 @@
                 </div>
             </div>
             <div class="space-y-12">
-                <div>
+                <div class="scroll-animate">
                     <h2 class="text-3xl font-bold text-blue-700 mb-6 border-b-2 border-blue-200 pb-2">ឧបករណ៍អត្ថបទ និងឯកសារ</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
-                        <div id="tool-image-to-text" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                        <div id="tool-image-to-text" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 tool-card">
                             <div class="p-8">
                                 <h3 class="text-2xl font-bold text-blue-600 mb-2">បំប្លែងរូបភាពជាអក្សរ</h3>
                                 <p class="text-gray-600 mb-6">ផ្ទុករូបភាពដែលមានអក្សរ ហើយ AI នឹងដកស្រង់អក្សរជូនអ្នក។</p>
@@ -379,7 +341,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="tool-pdf-to-text" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                        <div id="tool-pdf-to-text" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 tool-card">
                             <div class="p-8">
                                 <h3 class="text-2xl font-bold text-blue-600 mb-2">បំប្លែង PDF ជាអក្សរ</h3>
                                 <p class="text-gray-600 mb-6">ផ្ទុកឯកសារ PDF ឡើង ដើម្បីដកស្រង់អក្សរទាំងអស់។</p>
@@ -395,7 +357,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="tool-text-to-pdf" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                        <div id="tool-text-to-pdf" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 tool-card">
                             <div class="p-8">
                                 <h3 class="text-2xl font-bold text-blue-600 mb-2">បំប្លែងអក្សរជា PDF</h3>
                                 <p class="text-gray-600 mb-6">វាយបញ្ចូលអត្ថបទ ហើយបង្កើតជាឯកសារ PDF។</p>
@@ -408,10 +370,10 @@
                         </div>
                     </div>
                 </div>
-                <div>
+                <div class="scroll-animate delay-1">
                     <h2 class="text-3xl font-bold text-blue-700 mb-6 border-b-2 border-blue-200 pb-2">ឧបករណ៍សំឡេង</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
-                        <div id="tool-text-to-voice" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                        <div id="tool-text-to-voice" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 tool-card">
                             <div class="p-8">
                                 <h3 class="text-2xl font-bold text-blue-600 mb-2">បំប្លែងអក្សរជាសំឡេង</h3>
                                 <p class="text-gray-600 mb-6">វាយបញ្ចូលអត្ថបទដើម្បីស្តាប់ជាសំឡេង។</p>
@@ -422,7 +384,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="tool-voice-changer" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                        <div id="tool-voice-changer" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 tool-card">
                             <div class="p-8">
                                 <h3 class="text-2xl font-bold text-blue-600 mb-2">ប្ដូរសំឡេង</h3>
                                 <p class="text-gray-600 mb-6">ផ្លាស់ប្ដូរកម្រិតសំឡេង។ ថត ឬផ្ទុកឯកសារ MP3 ឡើង។</p>
@@ -446,10 +408,10 @@
                         </div>
                     </div>
                 </div>
-                <div>
+                <div class="scroll-animate delay-2">
                     <h2 class="text-3xl font-bold text-blue-700 mb-6 border-b-2 border-blue-200 pb-2">ឧបករណ៍រចនា និងជំនួយ</h2>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
-                        <div id="tool-qr-generator" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                        <div id="tool-qr-generator" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 tool-card">
                             <div class="p-8">
                                 <h3 class="text-2xl font-bold text-blue-600 mb-2">បង្កើតកូដ QR</h3>
                                 <p class="text-gray-600 mb-6">បញ្ចូលអត្ថបទ ឬ URL ដើម្បីបង្កើត QR Code។</p>
@@ -463,7 +425,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="tool-qr-reader" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                        <div id="tool-qr-reader" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 tool-card">
                             <div class="p-8">
                                 <h3 class="text-2xl font-bold text-blue-600 mb-2">អានកូដ QR</h3>
                                 <p class="text-gray-600 mb-6">ផ្ទុករូបភាពកូដ QR ឡើង ដើម្បីដកស្រង់ទិន្នន័យ។</p>
@@ -475,7 +437,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="tool-color-picker" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100">
+                        <div id="tool-color-picker" class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-100 tool-card">
                             <div class="p-8">
                                 <h3 class="text-2xl font-bold text-blue-600 mb-2">ឧបករណ៍ជ្រើសរើសពណ៌</h3>
                                 <p class="text-gray-600 mb-6">ជ្រើសរើសពណ៌ដើម្បីមើល និងចម្លងកូដពណ៌ផ្សេងៗ។</p>
@@ -594,11 +556,11 @@
         <!-- Features Page -->
         <section id="features" class="page-content">
              <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">អត្ថប្រយោជន៍នៃឧបករណ៍ AI</h1>
+                <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">អត្ថប្រយោជន៍នៃAI Tool</h1>
                 <p class="text-lg text-gray-600 max-w-3xl mx-auto">AI មិនត្រឹមតែសម្រាប់អ្នកបច្ចេកទេសទេ តែវាអាចជួយមនុស្សគ្រប់គ្នាក្នុងជីវិតប្រចាំថ្ងៃ និងអាជីវកម្ម។</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="bg-white p-8 rounded-lg shadow-lg border-l-4 border-blue-500">
+                <div class="bg-white p-8 rounded-lg shadow-lg border-l-4 border-blue-500 scroll-animate">
                     <h2 class="text-3xl font-bold text-blue-600 mb-6">ក្នុងជីវិតប្រចាំថ្ងៃ</h2>
                     <ul class="space-y-5 text-gray-700">
                         <li class="flex items-start">
@@ -630,7 +592,7 @@
                         </li>
                     </ul>
                 </div>
-                 <div class="bg-white p-8 rounded-lg shadow-lg border-l-4 border-green-500">
+                 <div class="bg-white p-8 rounded-lg shadow-lg border-l-4 border-green-500 scroll-animate delay-1">
                     <h2 class="text-3xl font-bold text-green-600 mb-6">ក្នុងអាជីវកម្ម</h2>
                     <ul class="space-y-5 text-gray-700">
                         <li class="flex items-start">
@@ -671,7 +633,7 @@
                 <h1 class="text-4xl md:text-5xl text-blue-700 mb-4">ទំនាក់ទំនងពួកយើង</h1>
                 <p class="text-lg text-gray-600 max-w-2xl mx-auto">ប្រសិនបើអ្នកមានសំណួរ ឬត្រូវការព័ត៌មានបន្ថែម សូមទាក់ទងមកពួកយើងតាមរយៈព័ត៌មានខាងក្រោម។</p>
             </div>
-            <div class="max-w-lg mx-auto bg-white p-8 rounded-lg shadow-lg">
+            <div class="max-w-lg mx-auto bg-white p-8 rounded-lg shadow-lg scroll-animate">
                 <div class="space-y-6">
                     <div class="flex items-center">
                         <svg class="w-8 h-8 text-blue-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
@@ -738,7 +700,7 @@
 
     <footer class="bg-white border-t mt-12">
         <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-600">
-            <p>&copy; <span id="current-year">2025</span> AI Tool. រក្សាសិទ្ធិគ្រប់យ៉ាង។</p>
+            <p>&copy; <span id="current-year">2025</span> AI Tools. រក្សាសិទ្ធិគ្រប់យ៉ាង។</p>
         </div>
     </footer>
 
@@ -747,4 +709,5 @@
     </script>
 </body>
 </html>
+
 
