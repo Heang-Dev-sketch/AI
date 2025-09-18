@@ -1,4 +1,4 @@
- // --- Page Navigation & Setup ---
+        // --- Page Navigation & Setup ---
         document.addEventListener('DOMContentLoaded', () => {
             const pages = document.querySelectorAll('.page-content');
             const navLinks = document.querySelectorAll('.nav-link');
@@ -7,13 +7,14 @@
 
             window.showPage = (pageId) => {
                 document.querySelector('main').classList.toggle('p-0', pageId === 'smart-ai');
-                document.querySelector('main').classList.toggle('container', pageId !== 'smart-ai');
+                 document.querySelector('main').classList.toggle('container', pageId !== 'smart-ai');
                 document.querySelector('main').classList.toggle('mx-auto', pageId !== 'smart-ai');
                 document.querySelector('main').classList.toggle('px-4', pageId !== 'smart-ai');
                 document.querySelector('main').classList.toggle('sm:px-6', pageId !== 'smart-ai');
                 document.querySelector('main').classList.toggle('lg:px-8', pageId !== 'smart-ai');
                 document.querySelector('main').classList.toggle('py-8', pageId !== 'smart-ai');
                 document.querySelector('main').classList.toggle('md:py-12', pageId !== 'smart-ai');
+
 
                 pages.forEach(page => page.classList.remove('active'));
                 const targetPage = document.getElementById(pageId);
@@ -52,17 +53,37 @@
                 const imageUploadInput = document.getElementById('smart-ai-image-upload');
                 const imagePreviewContainer = document.getElementById('image-preview-container');
                 const codePreviewModal = document.getElementById('code-preview-modal');
+                const previewIframeWrapper = document.getElementById('preview-iframe-wrapper');
                 const previewIframe = document.getElementById('preview-iframe');
                 const closePreviewBtn = document.getElementById('close-preview-btn');
+                const promptEnhancerBtn = document.getElementById('prompt-enhancer-btn');
+
                 let uploadedImageData = null;
                 let uploadedImageType = null;
+                let currentAiMode = 'chat'; // 'chat', 'image', 'code'
 
                 const API_KEY = "AIzaSyCGeAhRrYpYR3K_GxCIOu0oMm7dk5Q84W0"; 
                 const CONVERSATION_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
-                const IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${API_KEY}`;
+                const IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${API_KEY}`;
                 let conversationHistory = [];
+                
+                window.setAiMode = (mode) => {
+                    currentAiMode = mode;
+                    const buttons = document.querySelectorAll('.ai-mode-btn');
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    const activeBtn = document.querySelector(`.ai-mode-btn[onclick="setAiMode('${mode}')"]`);
+                    if(activeBtn) activeBtn.classList.add('active');
 
-                const openPreviewModal = (code) => {
+                    if(mode === 'chat') {
+                        userInput.placeholder = "វាយសាររបស់អ្នកនៅទីនេះ...";
+                    } else if (mode === 'image') {
+                        userInput.placeholder = "ពិពណ៌នារូបភាពដែលអ្នកចង់បាន...";
+                    } else if (mode === 'code') {
+                         userInput.placeholder = "ពិពណ៌នាកូដដែលអ្នកចង់បាន...";
+                    }
+                }
+
+                window.openPreviewModal = (code) => {
                     previewIframe.srcdoc = code;
                     codePreviewModal.classList.remove('hidden');
                     codePreviewModal.classList.add('flex');
@@ -72,7 +93,17 @@
                     codePreviewModal.classList.remove('flex');
                     previewIframe.srcdoc = '';
                 };
-                if(closePreviewBtn) closePreviewBtn.addEventListener('click', closePreviewModal);
+                 if(closePreviewBtn) closePreviewBtn.addEventListener('click', closePreviewModal);
+
+                window.setPreviewSize = (size) => {
+                    const wrapper = document.getElementById('preview-iframe-wrapper');
+                    const buttons = document.querySelectorAll('.responsive-btn');
+                    wrapper.className = ' ';
+                    wrapper.classList.add(`preview-${size}`, 'transition-all', 'duration-300', 'ease-in-out', 'mx-auto', 'border-4', 'border-gray-700', 'rounded-lg', 'shadow-xl', 'h-full');
+                    
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    document.querySelector(`.responsive-btn[onclick="setPreviewSize('${size}')"]`).classList.add('active');
+                }
 
                 if(imageUploadInput) imageUploadInput.addEventListener('change', (e) => {
                     const file = e.target.files[0];
@@ -94,39 +125,120 @@
                     imagePreviewContainer.innerHTML = '';
                 };
 
-                const createChatBubble = (message, sender) => {
+                const createAiMessageBubble = (message) => {
                     const bubbleWrapper = document.createElement('div');
-                    bubbleWrapper.className = `flex w-full mt-2 space-x-3 max-w-full ${sender === 'user' ? 'user-message-wrapper' : ''}`;
+                    bubbleWrapper.className = 'flex w-full mt-2 space-x-3 max-w-full';
+                    
                     const bubble = document.createElement('div');
-                    bubble.className = `chat-message p-3 rounded-lg ${sender === 'user' ? 'user-message' : 'ai-message'}`;
-                    const messageSpan = document.createElement('span');
-                    messageSpan.textContent = message;
-                    bubble.appendChild(messageSpan);
+                    bubble.className = 'chat-message p-3 rounded-lg ai-message';
+                    
                     const codeRegex = /```html\n([\s\S]*?)\n```/;
                     const codeMatch = message.match(codeRegex);
+
                     if (codeMatch && codeMatch[1]) {
                         const code = codeMatch[1];
-                        const previewButton = document.createElement('button');
-                        previewButton.textContent = 'Run Preview';
-                        previewButton.className = 'btn-action mt-3 w-full bg-gray-700 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-800';
-                        previewButton.onclick = () => openPreviewModal(code);
-                        bubble.appendChild(previewButton);
+                        const preMessage = message.substring(0, codeMatch.index);
+                        
+                        const messageSpan = document.createElement('span');
+                        messageSpan.textContent = preMessage;
+                        bubble.appendChild(messageSpan);
+                        
+                        const codeBlock = document.createElement('pre');
+                        codeBlock.className = 'chat-code-block';
+                        const codeElement = document.createElement('code');
+                        codeElement.textContent = code;
+                        codeBlock.appendChild(codeElement);
+                        bubble.appendChild(codeBlock);
+
+                        const buttonGroup = document.createElement('div');
+                        buttonGroup.className = 'flex space-x-2 mt-3';
+                        buttonGroup.innerHTML = `
+                            <button class="btn-action text-xs bg-gray-600 text-white font-bold py-1 px-3 rounded-md hover:bg-gray-700" onclick="toggleCode(this)">💻 មើលកូដ</button>
+                            <button class="btn-action text-xs bg-blue-600 text-white font-bold py-1 px-3 rounded-md hover:bg-blue-700" onclick="openPreviewModal(this.dataset.code)">👁️ មើលផ្ទាល់</button>
+                            <button class="btn-action text-xs bg-green-500 text-white font-bold py-1 px-3 rounded-md hover:bg-green-600" onclick="copyCode(this)">📋 ចម្លងកូដ</button>
+                        `;
+                        buttonGroup.querySelector('[onclick*="openPreviewModal"]').dataset.code = code;
+                        bubble.appendChild(buttonGroup);
+
+                    } else {
+                        const messageSpan = document.createElement('span');
+                        messageSpan.textContent = message;
+                        bubble.appendChild(messageSpan);
                     }
+                    
                     bubbleWrapper.appendChild(bubble);
                     return bubbleWrapper;
                 };
+
+                window.toggleCode = (btn) => {
+                    const codeBlock = btn.parentElement.previousElementSibling;
+                    const isHidden = codeBlock.style.display === 'none' || codeBlock.style.display === '';
+                    codeBlock.style.display = isHidden ? 'block' : 'none';
+                    btn.textContent = isHidden ? '💻 លាក់កូដ' : '💻 មើលកូដ';
+                }
+
+                window.copyCode = (btn) => {
+                    const codeBlock = btn.parentElement.previousElementSibling;
+                    const codeToCopy = codeBlock.querySelector('code').textContent;
+
+                    navigator.clipboard.writeText(codeToCopy).then(() => {
+                        btn.textContent = '✅ បានចម្លង!';
+                        setTimeout(() => { btn.textContent = '📋 ចម្លងកូដ'; }, 2000);
+                    }).catch(err => {
+                        console.warn('Could not copy text using navigator.clipboard, trying fallback.', err);
+                        const textArea = document.createElement("textarea");
+                        textArea.value = codeToCopy;
+                        textArea.style.position = "fixed";
+                        textArea.style.top = "-9999px";
+                        textArea.style.left = "-9999px";
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        try {
+                            const successful = document.execCommand('copy');
+                            if (successful) {
+                                btn.textContent = '✅ បានចម្លង!';
+                                setTimeout(() => { btn.textContent = '📋 ចម្លងកូដ'; }, 2000);
+                            } else {
+                                btn.textContent = '❌ បរាជ័យ';
+                                setTimeout(() => { btn.textContent = '📋 ចម្លងកូដ'; }, 2000);
+                            }
+                        } catch (e) {
+                             console.error('Fallback copy failed', e);
+                             btn.textContent = '❌ បរាជ័យ';
+                             setTimeout(() => { btn.textContent = '📋 ចម្លងកូដ'; }, 2000);
+                        }
+                        document.body.removeChild(textArea);
+                    });
+                }
                 
-                const createImageBubble = (imageUrl) => {
+                const showImageLoadingBubble = () => {
                     const bubbleWrapper = document.createElement('div');
-                    bubbleWrapper.className = `flex w-full mt-2 space-x-3 max-w-full`;
-                    const bubble = document.createElement('div');
-                    bubble.className = `chat-message p-2 rounded-lg ai-message`;
-                    const img = document.createElement('img');
-                    img.src = imageUrl;
-                    img.className = 'rounded-md max-w-xs';
-                    bubble.appendChild(img);
-                    bubbleWrapper.appendChild(bubble);
-                    return bubbleWrapper;
+                    bubbleWrapper.id = 'image-loading-bubble';
+                    bubbleWrapper.className = 'flex w-full mt-2 space-x-3 max-w-full';
+                    bubbleWrapper.innerHTML = `
+                        <div class="chat-message p-3 rounded-lg ai-message">
+                            <div class="flex items-center space-x-2">
+                                <svg class="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span>កំពុងបង្កើតរូបភាព...</span>
+                            </div>
+                        </div>
+                    `;
+                    chatbox.appendChild(bubbleWrapper);
+                    chatbox.scrollTop = chatbox.scrollHeight;
+                }
+
+                const createImageBubble = (imageUrl) => {
+                     const bubbleWrapper = document.createElement('div');
+                     bubbleWrapper.className = `flex w-full mt-2 space-x-3 max-w-full`;
+                     const bubble = document.createElement('div');
+                     bubble.className = `chat-message p-2 rounded-lg ai-message bg-gray-800`;
+                     const img = document.createElement('img');
+                     img.src = imageUrl;
+                     img.className = 'rounded-md max-w-xs';
+                     bubble.appendChild(img);
+                     bubbleWrapper.appendChild(bubble);
+                     return bubbleWrapper;
                 }
 
                 const createUserMessageBubble = (message, imageUrl) => {
@@ -163,32 +275,73 @@
                     if (indicator) indicator.remove();
                 };
 
+                const setInputState = (disabled) => {
+                    userInput.disabled = disabled;
+                    sendBtn.disabled = disabled;
+                    promptEnhancerBtn.disabled = disabled;
+                };
+
                 const generateImage = async (prompt) => {
-                    showTypingIndicator();
+                    showImageLoadingBubble();
+                    setInputState(true);
                     try {
-                        const payload = { instances: [{ prompt }], parameters: { "sampleCount": 1 } };
+                        const payload = {
+                            contents: [{
+                                parts: [{ text: prompt }]
+                            }],
+                            generationConfig: {
+                                responseModalities: ['IMAGE']
+                            },
+                        };
                         const response = await fetch(IMAGE_API_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
+
                         if (!response.ok) {
                             const errorData = await response.json();
                             throw new Error(errorData.error?.message || 'Error generating image.');
                         }
+                        
                         const result = await response.json();
-                        const base64Data = result.predictions?.[0]?.bytesBase64Encoded;
+                        const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
                         if (base64Data) {
                             const imageUrl = `data:image/png;base64,${base64Data}`;
-                            chatbox.appendChild(createImageBubble(imageUrl));
+                            const loadingBubble = document.getElementById('image-loading-bubble');
+                            if (loadingBubble) loadingBubble.replaceWith(createImageBubble(imageUrl));
                         } else {
-                            throw new Error("No image data received from API.");
+                            const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                            const errorMessage = textResponse || "No image data received from API.";
+                            throw new Error(errorMessage);
                         }
                     } catch (error) {
                         console.error("Image Generation Error:", error);
-                        chatbox.appendChild(createChatBubble(`សូមអភ័យទោស, មានបញ្ហាក្នុងការបង្កើតរូបភាព: ${error.message}`, 'ai'));
+                        let errorMessage = `សូមអភ័យទោស, មានបញ្ហាក្នុងការបង្កើតរូបភាព: ${error.message}`;
+
+                        if (error.message.includes("Quota exceeded")) {
+                            const retryMatch = error.message.match(/Please retry in ([\d\.]+)s/);
+                            if (retryMatch && retryMatch[1]) {
+                                const retrySeconds = parseFloat(retryMatch[1]);
+                                const now = new Date();
+                                now.setSeconds(now.getSeconds() + retrySeconds);
+                                const retryTime = now.toLocaleTimeString('en-US', {
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                    hour12: true
+                                });
+                                errorMessage = `សូមអភ័យទោស!\nដែនកំណត់បង្កើតរូបភាពដោយឥតគិតថ្លៃសម្រាប់ថ្ងៃនេះបានពេញហើយ។\n\n🕒 អ្នកអាចសាកល្បងម្តងទៀតនៅម៉ោងប្រហែល ${retryTime}។\n\nℹ️ ចំណាំ៖ សេវាកម្មឥតគិតថ្លៃមានដែនកំណត់ក្នុងការបង្កើតរូបភាពក្នុងមួយថ្ងៃ។`;
+                            } else {
+                                errorMessage = `សូមអភ័យទោស!\nដែនកំណត់បង្កើតរូបភាពដោយឥតគិតថ្លៃសម្រាប់ថ្ងៃនេះបានពេញហើយ។ សូមព្យាយាមម្តងទៀតនៅថ្ងៃស្អែក។\n\nℹ️ ចំណាំ៖ សេវាកម្មឥតគិតថ្លៃមានដែនកំណត់ក្នុងការបង្កើតរូបភាពក្នុងមួយថ្ងៃ។`;
+                            }
+                        }
+
+                        const loadingBubble = document.getElementById('image-loading-bubble');
+                        if (loadingBubble) loadingBubble.replaceWith(createAiMessageBubble(errorMessage));
                     } finally {
-                        hideTypingIndicator();
+                        setInputState(false);
+                        userInput.focus();
                         chatbox.scrollTop = chatbox.scrollHeight;
                     }
                 };
@@ -196,12 +349,16 @@
                 const generateText = async (parts) => {
                     conversationHistory.push({ role: "user", parts: parts });
                     showTypingIndicator();
+                    setInputState(true);
                     try {
-                        const systemInstruction = { 
-                            parts: [{ 
-                                text: "You are 'AI Tools ខ្មែរ', a helpful AI assistant. Your capabilities include answering questions, generating images, and writing code. When asked to generate code, always provide a complete, runnable HTML file within a single markdown block like ```html\n...\n```. You MUST include all necessary HTML, CSS (using <style> tags or Tailwind CSS classes), and JavaScript (using <script> tags) in that single block. Assume Tailwind CSS is available. Make the designs modern and responsive." 
-                            }] 
-                        };
+                        let systemText = "You are 'AI Tools ខ្មែរ', a helpful AI assistant for general conversation in Khmer.";
+                        if (currentAiMode === 'code') {
+                            systemText = "You are an expert web developer AI. Your task is to write complete, single-file HTML code based on the user's request. You MUST include all necessary HTML, CSS (using Tailwind CSS classes inside `<style>` tags if necessary), and JavaScript (inside `<script>` tags). The code must be runnable and responsive. Assume Tailwind CSS is available via CDN. Respond ONLY with the markdown code block ```html\n...\n```."
+                        } else if (currentAiMode === 'image') {
+                             systemText = "You are an expert AI image prompt engineer. You will receive a request for an image and your job is to create a detailed, high-quality prompt in English for an AI image generator based on that request. Then, respond ONLY with the generated image prompt prefixed by the phrase 'បង្កើតរូបភាព: '.";
+                        }
+                        
+                        const systemInstruction = { parts: [{ text: systemText }] };
                         const payload = { contents: conversationHistory, systemInstruction };
                         const response = await fetch(CONVERSATION_API_URL, {
                             method: 'POST',
@@ -213,40 +370,80 @@
                             throw new Error(errorData.error?.message || 'An unknown error occurred.');
                         }
                         const result = await response.json();
-                        const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                        let aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
                         if (aiResponse) {
-                            chatbox.appendChild(createChatBubble(aiResponse, 'ai'));
+                             if (aiResponse.startsWith('បង្កើតរូបភាព: ')) {
+                                hideTypingIndicator();
+                                const imagePrompt = aiResponse.replace('បង្កើតរូបភាព: ', '').trim();
+                                generateImage(imagePrompt); // Hand off to the image generator
+                                return; // Stop further processing in this function
+                            }
+
+                            chatbox.appendChild(createAiMessageBubble(aiResponse));
                             conversationHistory.push({ role: "model", parts: [{ text: aiResponse }] });
                         } else {
-                            chatbox.appendChild(createChatBubble("សូមអភ័យទោស, ខ្ញុំមិនទទួលបានការឆ្លើយតបទេ។", 'ai'));
+                            chatbox.appendChild(createAiMessageBubble("សូមអភ័យទោស, ខ្ញុំមិនទទួលបានការឆ្លើយតបទេ។"));
                         }
                     } catch (error) {
                         console.error("Chatbot API Error:", error);
-                        chatbox.appendChild(createChatBubble(`សូមអភ័យទោស, មានបញ្ហា: ${error.message}`, 'ai'));
+                        chatbox.appendChild(createAiMessageBubble(`សូមអភ័យទោស, មានបញ្ហា: ${error.message}`));
                     } finally {
                         hideTypingIndicator();
+                        setInputState(false);
+                        userInput.focus();
                         chatbox.scrollTop = chatbox.scrollHeight;
+                    }
+                }
+
+                const enhancePrompt = async () => {
+                    const simplePrompt = userInput.value.trim();
+                    if (!simplePrompt) return;
+
+                    setInputState(true);
+                    promptEnhancerBtn.innerHTML = `<svg class="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                    
+                    try {
+                        const systemInstruction = { parts: [{ text: "You are a creative prompt engineer. Take the user's simple idea and expand it into a detailed, descriptive prompt suitable for an AI image generator. The prompt should be in English. Respond ONLY with the enhanced prompt, without any conversational text or explanations." }] };
+                        const payload = { contents: [{parts: [{text: simplePrompt}]}], systemInstruction };
+                        const response = await fetch(CONVERSATION_API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!response.ok) throw new Error('Failed to enhance prompt.');
+                        
+                        const result = await response.json();
+                        const enhancedPrompt = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                        
+                        if(enhancedPrompt) {
+                            userInput.value = enhancedPrompt;
+                        }
+                    } catch(error) {
+                        console.error("Prompt Enhancement Error:", error);
+                        userInput.value = simplePrompt + " (enhancement failed)";
+                    } finally {
+                        setInputState(false);
+                        promptEnhancerBtn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>`;
+                        userInput.focus();
                     }
                 }
                 
                 const sendMessage = async () => {
-                    const message = userInput.value.trim();
+                    let message = userInput.value.trim();
                     if (!message && !uploadedImageData) return;
+                    
                     const imageUrlForBubble = uploadedImageData ? `data:${uploadedImageType};base64,${uploadedImageData}` : null;
-                    chatbox.appendChild(createUserMessageBubble(message, imageUrlForBubble));
+                    chatbox.appendChild(createUserMessageBubble(message, imageUrlForBubble)); // Show original message
                     userInput.value = '';
-                    const imageGenKeywords = ['generate image', 'create a picture', 'draw a picture', 'គូររូប', 'បង្កើតរូបភាព'];
-                    const isImageGenRequest = imageGenKeywords.some(keyword => message.toLowerCase().includes(keyword));
-                    if (isImageGenRequest && !uploadedImageData) {
-                        generateImage(message);
-                    } else {
-                        const parts = [];
-                        if (message) parts.push({ text: message });
-                        if (uploadedImageData) {
-                            parts.push({ inlineData: { mimeType: uploadedImageType, data: uploadedImageData } });
-                        }
-                        generateText(parts);
+
+                    const parts = [];
+                    if (message) parts.push({ text: message });
+                    if (uploadedImageData) {
+                        parts.push({ inlineData: { mimeType: uploadedImageType, data: uploadedImageData } });
                     }
+                    generateText(parts);
+                    
                     window.removeImagePreview();
                     chatbox.scrollTop = chatbox.scrollHeight;
                 };
@@ -255,9 +452,10 @@
                 if(userInput) userInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
-                        sendMessage();
+                        if(!userInput.disabled) sendMessage();
                     }
                 });
+                if(promptEnhancerBtn) promptEnhancerBtn.addEventListener('click', enhancePrompt);
             }
 
             // --- Code Editor Logic ---
@@ -303,32 +501,6 @@
                 document.body.appendChild(element);
                 element.click();
                 document.body.removeChild(element);
-            }
-
-            function copyToClipboard(text, statusElement, successMessage) {
-                if (!navigator.clipboard) {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = text;
-                    textArea.style.position="fixed";
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        if (statusElement) {
-                            statusElement.textContent = successMessage;
-                            setTimeout(() => { statusElement.textContent = ''; }, 2000);
-                        }
-                    } catch (err) { console.error('Fallback copy failed', err); }
-                    document.body.removeChild(textArea);
-                    return;
-                }
-                navigator.clipboard.writeText(text).then(() => {
-                    if (statusElement) {
-                        statusElement.textContent = successMessage;
-                        setTimeout(() => { statusElement.textContent = ''; }, 2000);
-                    }
-                }).catch(err => console.error('Clipboard copy failed', err));
             }
             
             const ocrButton = document.getElementById('ocr-button');
