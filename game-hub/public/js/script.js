@@ -15,7 +15,6 @@
                 document.querySelector('main').classList.toggle('py-8', pageId !== 'smart-ai');
                 document.querySelector('main').classList.toggle('md:py-12', pageId !== 'smart-ai');
 
-
                 pages.forEach(page => page.classList.remove('active'));
                 const targetPage = document.getElementById(pageId);
                 if (targetPage) targetPage.classList.add('active');
@@ -802,4 +801,18 @@
                     }
                 });
             }
+             // --- On-scroll Animation Logic ---
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            const elementsToAnimate = document.querySelectorAll('.scroll-animate');
+            elementsToAnimate.forEach(el => observer.observe(el));
         });
